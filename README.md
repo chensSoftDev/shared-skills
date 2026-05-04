@@ -12,7 +12,13 @@
 shared-skills/
 ├── README.md
 └── skills/
+    ├── coding-miniapp/       # 小程序端编码规则
+    │   └── SKILL.md
     ├── coding-nestjs/      # NestJS 服务端通用编码规则
+    │   └── SKILL.md
+    ├── coding-nextjs/      # Next.js 前端编码规则
+    │   └── SKILL.md
+    ├── testing-miniapp-e2e/ # 小程序 E2E 测试编写
     │   └── SKILL.md
     ├── workflow-backlog/    # 需求进度管理（参数化）
     │   └── SKILL.md
