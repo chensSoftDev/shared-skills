@@ -17,7 +17,7 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 
 ## 核心规则
 
-- 优先使用 shared 脚本（`.shared-skills/scripts/`）：`release-dev.sh`、`release-prod.sh`、`release-rollback.sh`。
+- 优先使用 shared skill 脚本（`.shared-skills/skills/workflow-deploy/`）：`release-dev.sh`、`release-prod.sh`、`release-rollback.sh`。
 - 项目自定义构建逻辑写在本地 `scripts/deploy.sh`。
 - 项目自定义 preflight 检查写在本地 `scripts/preflight-hook.sh`。
 - Prod 发布以最近一次成功的 dev release 为门禁，除非用户明确批准 `--allow-without-dev`。
@@ -75,7 +75,7 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 ### 2. Dev 发布
 
 ```bash
-.shared-skills/scripts/release-dev.sh
+.shared-skills/skills/workflow-deploy/release-dev.sh
 ```
 
 预期结果：preflight 通过 → 构建镜像 → 更新 dev 栈 → smoke 通过 → `deploy/dev-releases/latest-success.env` 更新
@@ -83,7 +83,7 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 ### 3. Prod 发布
 
 ```bash
-.shared-skills/scripts/release-prod.sh
+.shared-skills/skills/workflow-deploy/release-prod.sh
 ```
 
 预期结果：prod preflight 通过 → commit 匹配最近 dev release → 部署完成 → smoke 通过
@@ -91,8 +91,8 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 ### 4. 回滚
 
 ```bash
-.shared-skills/scripts/release-rollback.sh --stage prod
-.shared-skills/scripts/release-rollback.sh --stage dev
+.shared-skills/skills/workflow-deploy/release-rollback.sh --stage prod
+.shared-skills/skills/workflow-deploy/release-rollback.sh --stage dev
 ```
 
 ## 常用标志
