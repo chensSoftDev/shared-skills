@@ -107,12 +107,11 @@ Agent 读取 SKILL.md 时应同时读取项目的 `skills-config.json`，将占�
 
 ## 项目特有 Skills
 
-以下 skill 因项目差异过大，保留在各项目本地 `.agents/skills/` 下：
+以下 skill 因项目差异较大，保留在各项目本地 `.agents/skills/` 下：
 
-- `workflow-deploy` — 部署操作（服务器、脚本、路径完全不同）
-- `coding-nextjs` — Next.js 前端规则（仅 luggage-platform）
-- `coding-miniapp` — 小程序规则（仅 miniapp）
-- `testing-miniapp-e2e` — 小程序 E2E 测试（仅 miniapp）
+- `workflow-deploy` — 部署操作（两项目服务器、脚本、流程完全不同）
+  - luggage-platform：完整 CI/CD（release-dev/prod、rollback、preflight、smoke）
+  - miniapp：简单 docker-compose up + mvp-smoke
 
 ## 更新 Shared Skills
 
