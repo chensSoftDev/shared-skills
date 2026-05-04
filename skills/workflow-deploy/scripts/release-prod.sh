@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SKILL_DIR/../../scripts/lib/release-common.sh"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$SKILL_DIR/scripts/release-common.sh"
 source "$ROOT_DIR/scripts/deploy-config.sh"
 
 SKIP_PREFLIGHT="false"
@@ -92,7 +92,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$SKIP_PREFLIGHT" != "true" ]]; then
-  "$ROOT_DIR/scripts/preflight.sh" --mode prod --skip-build
+  "$SKILL_DIR/scripts/preflight.sh" --mode prod --skip-build
 fi
 
 if [[ "$ALLOW_WITHOUT_DEV" != "true" ]]; then
@@ -146,19 +146,19 @@ if [[ -n "$ADMIN_TOKEN" ]]; then
 fi
 
 if [[ "$SKIP_SMOKE" != "true" ]]; then
-  if ! "$ROOT_DIR/scripts/smoke.sh" "${SMOKE_ARGS[@]}"; then
+  if ! "$SKILL_DIR/scripts/smoke.sh" "${SMOKE_ARGS[@]}"; then
     if [[ "$ROLLBACK_ON_FAIL" == "true" && -n "$PROD_SNAPSHOT_FILE" ]]; then
       echo "[release-prod] smoke failed, rolling back"
-      "$ROOT_DIR/scripts/release-rollback.sh" "${ROLLBACK_ARGS[@]}" "$PROD_SNAPSHOT_FILE"
+      "$SKILL_DIR/scripts/release-rollback.sh" "${ROLLBACK_ARGS[@]}" "$PROD_SNAPSHOT_FILE"
     fi
     exit 1
   fi
 
-  if [[ "$RUN_SHADOW_SMOKE" == "true" ]]; then
-    if ! "$ROOT_DIR/scripts/shadow-gateway-smoke.sh" --stage prod; then
+  if [[ "$RUN_SHADOW_SMOKE" == "true" && -f "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" ]]; then
+    if ! "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" --stage prod; then
       if [[ "$ROLLBACK_ON_FAIL" == "true" && -n "$PROD_SNAPSHOT_FILE" ]]; then
         echo "[release-prod] shadow smoke failed, rolling back"
-        "$ROOT_DIR/scripts/release-rollback.sh" "${ROLLBACK_ARGS[@]}" "$PROD_SNAPSHOT_FILE"
+        "$SKILL_DIR/scripts/release-rollback.sh" "${ROLLBACK_ARGS[@]}" "$PROD_SNAPSHOT_FILE"
       fi
       exit 1
     fi

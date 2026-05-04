@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]})" && pwd)"
-source "$SKILL_DIR/../../scripts/lib/release-common.sh"
+source "$SKILL_DIR/scripts/release-common.sh"
 source "$ROOT_DIR/scripts/deploy-config.sh"
 
 COMPOSE_FILE="${PROD_COMPOSE_FILE}"

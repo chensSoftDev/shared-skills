@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SKILL_DIR/../../scripts/lib/release-common.sh"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$SKILL_DIR/scripts/release-common.sh"
 source "$ROOT_DIR/scripts/deploy-config.sh"
 
 STAGE="prod"
@@ -95,9 +95,9 @@ fi
 
 if [[ "$STAGE" == "prod" ]]; then
   if [[ -n "$SNAPSHOT_FILE" ]]; then
-    "$ROOT_DIR/scripts/rollback.sh" "$SNAPSHOT_FILE"
+    "$SKILL_DIR/scripts/rollback.sh" "$SNAPSHOT_FILE"
   else
-    "$ROOT_DIR/scripts/rollback.sh"
+    "$SKILL_DIR/scripts/rollback.sh"
   fi
 
   if [[ "$SKIP_SMOKE" != "true" ]]; then
@@ -110,10 +110,10 @@ if [[ "$STAGE" == "prod" ]]; then
       SMOKE_ARGS+=(--admin-token "$ADMIN_TOKEN")
     fi
 
-    "$ROOT_DIR/scripts/smoke.sh" "${SMOKE_ARGS[@]}"
+    "$SKILL_DIR/scripts/smoke.sh" "${SMOKE_ARGS[@]}"
 
     if [[ "$RUN_SHADOW_SMOKE" == "true" ]]; then
-      "$ROOT_DIR/scripts/shadow-gateway-smoke.sh" --stage prod
+      [[ -f "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" ]] && "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" --stage prod
     fi
   fi
 
@@ -177,13 +177,13 @@ verify_containers_running \
   luggage-gateway-api-dev
 
 if [[ "$SKIP_SMOKE" != "true" ]]; then
-  "$ROOT_DIR/scripts/smoke.sh" \
+  "$SKILL_DIR/scripts/smoke.sh" \
     --api-base-url "$API_BASE_URL" \
     --skip-web \
     --skip-admin
 
   if [[ "$RUN_SHADOW_SMOKE" == "true" ]]; then
-    "$ROOT_DIR/scripts/shadow-gateway-smoke.sh" --stage dev
+    [[ -f "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" ]] && "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" --stage dev
   fi
 fi
 

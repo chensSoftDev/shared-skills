@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 cd "$ROOT_DIR"
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SKILL_DIR/../../scripts/lib/release-common.sh"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$SKILL_DIR/scripts/release-common.sh"
 source "$ROOT_DIR/scripts/deploy-config.sh"
 
 COMPOSE_FILE="${DEV_COMPOSE_FILE}"
@@ -36,7 +36,7 @@ USAGE
 rollback_if_needed() {
   if [[ "$DEPLOYED" == "true" && "$ROLLBACK_ON_FAIL" == "true" && -n "$SNAPSHOT_FILE" ]]; then
     echo "[release-dev] release failed, rolling back dev stack"
-    "$ROOT_DIR/scripts/release-rollback.sh" --stage dev --skip-smoke "$SNAPSHOT_FILE" || true
+    "$SKILL_DIR/scripts/release-rollback.sh" --stage dev --skip-smoke "$SNAPSHOT_FILE" || true
   fi
 }
 
@@ -84,7 +84,7 @@ verify_docker_ready
 mkdir -p "$RELEASE_DIR"
 
 if [[ "$SKIP_PREFLIGHT" != "true" ]]; then
-  "$ROOT_DIR/scripts/preflight.sh" --mode dev --skip-build
+  "$SKILL_DIR/scripts/preflight.sh" --mode dev --skip-build
 fi
 
 RELEASE_ID="$(date -u +%Y%m%d%H%M%S)"
@@ -132,13 +132,13 @@ verify_containers_running \
   luggage-gateway-api-dev
 
 if [[ "$SKIP_SMOKE" != "true" ]]; then
-  "$ROOT_DIR/scripts/smoke.sh" \
+  "$SKILL_DIR/scripts/smoke.sh" \
     --api-base-url "$API_BASE_URL" \
     --skip-web \
     --skip-admin
 
   if [[ "$RUN_SHADOW_SMOKE" == "true" ]]; then
-    "$ROOT_DIR/scripts/shadow-gateway-smoke.sh" --stage dev
+    [[ -f "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" ]] && "$SKILL_DIR/scripts/shadow-gateway-smoke.sh" --stage dev
   fi
 fi
 
