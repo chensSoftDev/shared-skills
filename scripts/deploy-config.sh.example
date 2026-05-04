@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# deploy-config.sh.example — 部署配置模板
+# 每个项目在自己仓库根目录的 scripts/deploy-config.sh 填写实际值
+# 脚本通过 source "$ROOT_DIR/scripts/deploy-config.sh" 加载
+
+# ─── Docker Compose 文件 ───
+DEV_COMPOSE_FILE="${DEV_COMPOSE_FILE:-docker-compose.dev.yml}"
+PROD_COMPOSE_FILE="${PROD_COMPOSE_FILE:-docker-compose.prod.yml}"
+
+# ─── Release 目录 ───
+RELEASE_DIR="${RELEASE_DIR:-deploy/releases}"
+DEV_RELEASE_DIR="${DEV_RELEASE_DIR:-deploy/dev-releases}"
+
+# ─── Env 文件列表（deploy.sh 检查） ───
+DEPLOY_ENV_FILES=(
+  # "deploy/api.env"
+  # "deploy/web.env"
+)
+
+# ─── 镜像构建列表 ───
+# 格式："镜像名|Dockerfile路径|构建上下文|构建参数"
+# 构建参数可选，多个用 | 分隔
+DEPLOY_IMAGES=(
+  # "luggage-api|apps/api/Dockerfile|.|"
+  # "luggage-web|apps/web/Dockerfile|.|NEXT_PUBLIC_API_BASE_URL=deploy/web.env:NEXT_PUBLIC_API_BASE_URL"
+)
+
+# ─── Compose 服务启动顺序 ───
+DEPLOY_SERVICES=(
+  # "mysql"
+  # "api"
+  # "web"
+)
+
+# ─── 容器名列表（健康检查用） ───
+DEPLOY_CONTAINERS=(
+  # "luggage-mysql-prod"
+  # "luggage-api-prod"
+)
+
+# ─── URL 默认值 ───
+DEV_API_BASE_URL="${DEV_API_BASE_URL:-http://127.0.0.1:3102}"
+PROD_API_BASE_URL="${PROD_API_BASE_URL:-http://127.0.0.1:3102}"
+PROD_WEB_BASE_URL="${PROD_WEB_BASE_URL:-}"
+PROD_ADMIN_BASE_URL="${PROD_ADMIN_BASE_URL:-}"
+
+# ─── Preflight 构建命令（跳过 --skip-build 时执行） ───
+BUILD_COMMANDS=(
+  # "pnpm build"
+)
+
+# ─── Smoke 跳过选项 ───
+SMOKE_SKIP_OPTIONS=()
+# 例：SMOKE_SKIP_OPTIONS=("--skip-web" "--skip-admin")
