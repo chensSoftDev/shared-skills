@@ -18,6 +18,10 @@ shared-skills/
     │   └── SKILL.md
     ├── coding-nextjs/      # Next.js 前端编码规则
     │   └── SKILL.md
+    ├── douyin-knowledge-video/ # 抖音知识视频生成流程
+    │   ├── SKILL.md
+    │   ├── references/
+    │   └── scripts/
     ├── testing-miniapp-e2e/ # 小程序 E2E 测试编写
     │   └── SKILL.md
     ├── workflow-backlog/    # 需求进度管理（参数化）
