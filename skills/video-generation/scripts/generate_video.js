@@ -4,21 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
-const DEFAULT_WIDTH = 1080;
-const DEFAULT_HEIGHT = 1920;
-const DEFAULT_FPS = 30;
-const DEFAULT_VOICE = 'Tingting';
-const DEFAULT_RATE = 185;
-
-const PALETTES = [
-  { bg: '0x0B3954', accent: '0xF6AE2D' },
-  { bg: '0x2E4057', accent: '0xF26419' },
-  { bg: '0x224F34', accent: '0xFFCB47' },
-  { bg: '0x402E32', accent: '0x5BC0EB' },
-  { bg: '0x17324D', accent: '0xEFA00B' },
-  { bg: '0x3C1642', accent: '0x7FD1B9' },
-  { bg: '0x1F363D', accent: '0xF7B801' },
-];
+const { DEFAULTS, PALETTES, FONT_CANDIDATES } = require('./config');
+const { loadTemplates, pickVariant, applyTopic, allocateDurations } = require('./scene_templates');
 
 function normalizeKeyword(keyword) {
   const value = String(keyword || '').trim();
@@ -30,7 +17,7 @@ function createSlug(value) {
     .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
-  return slug || 'douyin-knowledge-video';
+  return slug || 'video';
 }
 
 function roundMs(value) {
@@ -40,71 +27,40 @@ function roundMs(value) {
 function buildVideoScript(keyword, options = {}) {
   const topic = normalizeKeyword(keyword);
   const durationScale = Number(options.durationScale || 1);
-  const baseScenes = [
-    {
-      scene: 1,
-      duration: 12,
-      title: '开场钩子',
-      description: `${topic}：用反常识问题把观众拉进来`,
-      action: '主角盯着一张写满问号的便签，表情夸张地后退一步。',
-      dialogue: `今天聊${topic}。先别急着找答案，真正卡住你的，往往不是努力不够，而是你把问题看反了。`,
-    },
-    {
-      scene: 2,
-      duration: 14,
-      title: '常见误区',
-      description: `${topic}：拆掉最容易误导人的表层解释`,
-      action: '配角拿出三个写着借口的牌子，逐个摇头否定。',
-      dialogue: `很多人解释${topic}，喜欢怪环境、怪运气、怪别人资源多。可这些只解释了一部分，不能指导下一步行动。`,
-    },
-    {
-      scene: 3,
-      duration: 13,
-      title: '底层原因',
-      description: `${topic}：把注意力拉回可控变量`,
-      action: '画面切到放大镜扫过计划表，圈出关键变量。',
-      dialogue: `更有用的看法是，先找自己能控制的变量：目标是否清楚，反馈是否及时，投入有没有持续复盘。`,
-    },
-    {
-      scene: 4,
-      duration: 14,
-      title: '具体例子',
-      description: `${topic}：用日常场景解释抽象逻辑`,
-      action: '主角把一堆杂乱卡片排成三列，突然露出恍然大悟的表情。',
-      dialogue: `举个例子，如果每天都很忙，却不知道哪件事带来结果，那忙碌只是噪音，不会自动变成进步。`,
-    },
-    {
-      scene: 5,
-      duration: 13,
-      title: '行动方法',
-      description: `${topic}：给出可以马上执行的小步骤`,
-      action: '屏幕上出现三步清单，主角逐项打勾。',
-      dialogue: `可以从三步开始：写下目标，记录每天的关键动作，每周删掉一个低回报习惯。先让系统变清楚。`,
-    },
-    {
-      scene: 6,
-      duration: 15,
-      title: '反转提醒',
-      description: `${topic}：提醒观众避开新的误区`,
-      action: '配角按下暂停按钮，阻止主角冲出去乱试。',
-      dialogue: `但别把方法当魔法。真正改变结果的不是收藏技巧，而是持续执行、看数据、再调整。这个循环不能省。`,
-    },
-    {
-      scene: 7,
-      duration: 14,
-      title: '收束总结',
-      description: `${topic}：用一句话完成记忆点`,
-      action: '主角把问号便签翻面，背面写着清晰的下一步。',
-      dialogue: `所以，理解${topic}的关键，是少一点情绪解释，多一点可验证行动。能被复盘的事，才有机会被改变。`,
-    },
-  ];
+  const roles = loadTemplates(options.templates);
+  const limit = options.maxScenes ? Math.max(1, Number(options.maxScenes)) : roles.length;
+  const activeRoles = roles.slice(0, limit);
+  const totalDuration = Number(options.targetTotalDuration || DEFAULTS.targetTotalDuration);
+  const durations = allocateDurations(activeRoles, totalDuration);
+  const palettes = options.palettes || PALETTES;
 
-  const limit = options.maxScenes ? Math.max(1, Number(options.maxScenes)) : baseScenes.length;
-  return baseScenes.slice(0, limit).map((scene, index) => ({
+  return activeRoles.map((role, index) => {
+    const variant = pickVariant(role.variants, options.seed);
+    const filled = applyTopic(variant, topic);
+    return {
+      scene: index + 1,
+      title: role.title,
+      role: role.role,
+      description: filled.description,
+      action: filled.action,
+      dialogue: filled.dialogue,
+      palette: palettes[index % palettes.length],
+      duration: roundMs(durations[index] * durationScale),
+    };
+  });
+}
+
+function loadExternalScript(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const scenes = JSON.parse(raw);
+  if (!Array.isArray(scenes) || scenes.length === 0) {
+    throw new Error(`Invalid script file: expected a non-empty array of scenes`);
+  }
+  return scenes.map((scene, index) => ({
     ...scene,
-    scene: index + 1,
-    palette: PALETTES[index % PALETTES.length],
-    duration: roundMs(scene.duration * durationScale),
+    scene: scene.scene || index + 1,
+    palette: scene.palette || PALETTES[index % PALETTES.length],
+    duration: Number(scene.duration) || 15,
   }));
 }
 
@@ -210,13 +166,7 @@ async function probeDuration(file) {
 }
 
 function findFont() {
-  const candidates = [
-    '/System/Library/Fonts/PingFang.ttc',
-    '/System/Library/Fonts/STHeiti Medium.ttc',
-    '/System/Library/Fonts/Hiragino Sans GB.ttc',
-    '/Library/Fonts/Arial Unicode.ttf',
-  ];
-  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+  return FONT_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || null;
 }
 
 function findSceneAsset(assetDir, sceneNumber) {
@@ -275,8 +225,8 @@ function writeSceneTextFiles(scene, textDir) {
 
 function buildSceneFilter(scene, options) {
   const fontFile = options.fontFile;
-  const width = options.width || DEFAULT_WIDTH;
-  const height = options.height || DEFAULT_HEIGHT;
+  const width = options.width || DEFAULTS.width;
+  const height = options.height || DEFAULTS.height;
   const text = writeSceneTextFiles(scene, options.textDir);
   const titleSize = Math.round(height * 0.035);
   const bodySize = Math.round(height * 0.033);
@@ -304,8 +254,8 @@ function buildSceneFilter(scene, options) {
 
 async function generateNarration(scene, outputFile, options) {
   await run('say', [
-    '-v', options.voice || DEFAULT_VOICE,
-    '-r', String(options.rate || DEFAULT_RATE),
+    '-v', options.voice || DEFAULTS.voice,
+    '-r', String(options.rate || DEFAULTS.rate),
     '-o', outputFile,
     scene.dialogue,
   ], { quiet: true });
@@ -325,9 +275,9 @@ async function padAudio(inputFile, outputFile, duration) {
 }
 
 async function renderSceneClip(scene, audioFile, outputFile, options) {
-  const width = options.width || DEFAULT_WIDTH;
-  const height = options.height || DEFAULT_HEIGHT;
-  const fps = options.fps || DEFAULT_FPS;
+  const width = options.width || DEFAULTS.width;
+  const height = options.height || DEFAULTS.height;
+  const fps = options.fps || DEFAULTS.fps;
   const filter = buildSceneFilter(scene, options);
 
   const args = ['-y'];
@@ -377,7 +327,7 @@ async function generateVideo(options) {
     throw new Error('Missing CJK-capable font. Expected PingFang, STHeiti, Hiragino Sans GB, or Arial Unicode.');
   }
 
-  const outputRoot = path.resolve(options.outputRoot || path.join(process.cwd(), 'output', 'douyin-knowledge-video'));
+  const outputRoot = path.resolve(options.outputRoot || path.join(process.cwd(), 'output', 'video-generation'));
   const projectDir = path.join(outputRoot, createSlug(keyword));
   const audioDir = path.join(projectDir, 'audio');
   const clipDir = path.join(projectDir, 'clips');
@@ -386,10 +336,14 @@ async function generateVideo(options) {
   ensureDir(clipDir);
   ensureDir(textDir);
 
-  const scenes = buildVideoScript(keyword, {
-    durationScale: options.durationScale || 1,
-    maxScenes: options.maxScenes,
-  });
+  const scenes = options.scriptFile
+    ? loadExternalScript(options.scriptFile)
+    : buildVideoScript(keyword, {
+        durationScale: options.durationScale || 1,
+        maxScenes: options.maxScenes,
+        templates: options.templates,
+        targetTotalDuration: options.targetTotalDuration,
+      });
   fs.writeFileSync(path.join(projectDir, 'script.json'), JSON.stringify(scenes, null, 2), 'utf8');
 
   const rawAudioFiles = [];
@@ -414,9 +368,9 @@ async function generateVideo(options) {
     await padAudio(rawAudioFiles[scene.scene - 1], paddedAudio, scene.duration);
     const assetFile = findSceneAsset(options.assetsDir, scene.scene);
     await renderSceneClip(scene, paddedAudio, clipFile, {
-      width: options.width || DEFAULT_WIDTH,
-      height: options.height || DEFAULT_HEIGHT,
-      fps: options.fps || DEFAULT_FPS,
+      width: options.width || DEFAULTS.width,
+      height: options.height || DEFAULTS.height,
+      fps: options.fps || DEFAULTS.fps,
       fontFile,
       textDir,
       assetFile,
@@ -461,6 +415,12 @@ function parseArgs(argv) {
       options.durationScale = Number(argv[++index]);
     } else if (arg === '--max-scenes') {
       options.maxScenes = Number(argv[++index]);
+    } else if (arg === '--script') {
+      options.scriptFile = argv[++index];
+    } else if (arg === '--templates') {
+      options.templates = argv[++index];
+    } else if (arg === '--target-duration') {
+      options.targetTotalDuration = Number(argv[++index]);
     } else if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else {
@@ -474,16 +434,20 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`Usage:
   node scripts/generate_video.js "主题关键词"
+  node scripts/generate_video.js "主题关键词" --script <script.json>
 
 Options:
+  --script <file>          Use an externally generated script JSON (skips built-in template)
   --out <dir>              Output root directory
   --assets <dir>           Optional directory containing scene_01.png, scene_02.png, ...
-  --voice <name>           macOS say voice, default: ${DEFAULT_VOICE}
-  --rate <number>          Speech rate, default: ${DEFAULT_RATE}
-  --width <px>             Video width, default: ${DEFAULT_WIDTH}
-  --height <px>            Video height, default: ${DEFAULT_HEIGHT}
+  --voice <name>           macOS say voice, default: ${DEFAULTS.voice}
+  --rate <number>          Speech rate, default: ${DEFAULTS.rate}
+  --width <px>             Video width, default: ${DEFAULTS.width}
+  --height <px>            Video height, default: ${DEFAULTS.height}
   --duration-scale <num>   Scale planned scene durations, useful for smoke tests
-  --max-scenes <num>       Limit scene count, useful for smoke tests`);
+  --max-scenes <num>       Limit scene count, useful for smoke tests
+  --templates <file>       Custom scene templates JSON file (see scene_templates.js)
+  --target-duration <sec>  Target total duration in seconds, default: ${DEFAULTS.targetTotalDuration}`);
 }
 
 async function main() {
@@ -513,6 +477,7 @@ module.exports = {
   findSceneAsset,
   formatSrtTime,
   generateVideo,
+  loadExternalScript,
   parseArgs,
   writeSrt,
 };

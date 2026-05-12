@@ -12,25 +12,49 @@
 shared-skills/
 ├── README.md
 └── skills/
-    ├── coding-miniapp/       # 小程序端编码规则
+    ├── coding-miniapp/     # 小程序端编码规则
     │   └── SKILL.md
     ├── coding-nestjs/      # NestJS 服务端通用编码规则
     │   └── SKILL.md
     ├── coding-nextjs/      # Next.js 前端编码规则
     │   └── SKILL.md
-    ├── douyin-knowledge-video/ # 抖音知识视频生成流程
+    ├── create-skill/       # Skill 创建与维护流程
+    │   ├── SKILL.md
+    │   └── assets/
+    ├── testing-miniapp-e2e/ # 小程序 E2E 测试编写
+    │   └── SKILL.md
+    ├── video-generation/   # 短视频生产流程
     │   ├── SKILL.md
     │   ├── references/
     │   └── scripts/
-    ├── testing-miniapp-e2e/ # 小程序 E2E 测试编写
+    ├── video-script-generation/ # 短视频脚本生成
     │   └── SKILL.md
     ├── workflow-backlog/    # 需求进度管理（参数化）
     │   └── SKILL.md
     ├── workflow-commit/     # Git 提交规范（参数化）
     │   └── SKILL.md
+    ├── workflow-deploy/     # Docker 部署流程
+    │   ├── SKILL.md
+    │   └── scripts/
     └── workflow-release/    # 发布流程（参数化）
         └── SKILL.md
 ```
+
+## Skills 索引
+
+| Skill | 典型触发 | 职责 | subagent 调用 |
+|-------|----------|------|---------------|
+| `coding-miniapp` | 编写或修改 `miniapp/` 小程序代码 | 约束小程序 UI、API 基址、交互、数量格式和写操作配套要求 | 否 |
+| `coding-nestjs` | 编写或修改 NestJS 服务端代码 | 约束安全、鉴权、迁移、精度、审计日志、事务和验证要求 | 否 |
+| `coding-nextjs` | 编写或修改 `apps/web`、`apps/admin` 前端代码 | 约束设计系统、token、双语、环境变量和确认交互 | 否 |
+| `create-skill` | 新建、更新、改造或校验 skill | 维护 skill 结构、模板、资源引用、注册同步和格式校验 | 是 |
+| `testing-miniapp-e2e` | 创建、拆分或重构小程序 E2E 测试 | 指导 miniprogram-automator 用例拆分、步骤化实现和 helper 提取 | 否 |
+| `video-generation` | 用户要求生成短视频并输出 MP4 | 编排选题、脚本、素材、配音、剪辑、发布和复盘全流程 | 否 |
+| `video-script-generation` | 用户要求写视频脚本、视频文案或短视频对白 | 生成结构化 `script.json`，供视频生产管道消费 | 否 |
+| `workflow-backlog` | 评审需求、推进需求状态、处理 `BACKLOG.md` | 管理需求状态流转、迁移准备、Release Key 和禁止行为 | 否 |
+| `workflow-commit` | 生成 commit message 或执行 git commit | 规范 commit type、scope 和自动提交策略 | 否 |
+| `workflow-deploy` | 执行 Docker 部署、重启或回滚 | 使用 release 脚本完成 dev/prod 发布、门禁、smoke 和回滚 | 否 |
+| `workflow-release` | 准备上线、创建 Release、执行生产发布 | 维护 Release 目录、变更日志、迁移、生产计划和健康检查 | 否 |
 
 ## 使用方式
 
@@ -50,6 +74,7 @@ git submodule add <repo-url> .shared-skills
 |-------|------|------|
 | NestJS 编码规则 | `.shared-skills/skills/coding-nestjs/SKILL.md` | shared |
 | 提交规范 | `.shared-skills/skills/workflow-commit/SKILL.md` | shared |
+| Docker 部署流程 | `.shared-skills/skills/workflow-deploy/SKILL.md` | shared |
 | 项目特有 Skill | `.agents/skills/workflow-deploy/SKILL.md` | local |
 ```
 
@@ -111,11 +136,7 @@ Agent 读取 SKILL.md 时应同时读取项目的 `skills-config.json`，将占�
 
 ## 项目特有 Skills
 
-以下 skill 因项目差异较大，保留在各项目本地 `.agents/skills/` 下：
-
-- `workflow-deploy` — 部署操作（两项目服务器、脚本、流程完全不同）
-  - luggage-platform：完整 CI/CD（release-dev/prod、rollback、preflight、smoke）
-  - miniapp：简单 docker-compose up + mvp-smoke
+项目差异较大的流程仍可保留在各项目本地 `.agents/skills/` 下。若本地 skill 与 shared skill 同名，项目 `AGENTS.md` 应明确优先使用哪一个入口。
 
 ## 更新 Shared Skills
 
