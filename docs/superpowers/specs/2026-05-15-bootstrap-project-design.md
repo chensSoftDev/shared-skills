@@ -37,6 +37,7 @@ Primary options:
 
 - `--repo <url-or-path>`: required shared-skills git URL or local repository path.
 - `--path <submodule-path>`: optional submodule path, default `.shared-skills`.
+- `--skills <comma-separated-skill-names>`: optional filter for the skills exposed in generated project agent files.
 - `--force`: optional overwrite for generated `.agents/shared-skills.md`.
 - `--help`: print usage.
 
@@ -59,7 +60,9 @@ The script runs in the current working directory, which is treated as the target
    - If it exists, leave it untouched.
 
 4. Generate `.agents/shared-skills.md`.
-   - Include a Markdown table of all shared skill entry paths under the chosen submodule path.
+   - Include a Markdown table of shared skill entry paths under the chosen submodule path.
+   - When `--skills` is provided, include only those named skills.
+   - When `--skills` is omitted, include all shared skills.
    - Include a short note telling users to reference or merge it from `AGENTS.md`.
    - If the file exists, leave it untouched unless `--force` is set.
 
@@ -95,6 +98,7 @@ Required cases:
 - Second run succeeds without duplicating or corrupting generated files.
 - Existing `.agents/skills-config.json` is preserved.
 - Existing `.agents/shared-skills.md` is preserved by default and overwritten with `--force`.
+- `--skills video-generation,video-script-generation` writes only short-video skill references.
 - Running outside a git repository fails.
 - Existing non-submodule target path fails.
 

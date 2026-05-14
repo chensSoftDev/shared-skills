@@ -11,6 +11,9 @@
 ```
 shared-skills/
 ├── README.md
+├── scripts/
+│   ├── bootstrap-project.sh
+│   └── bootstrap-project.test.sh
 └── skills/
     ├── coding-miniapp/     # 小程序端编码规则
     │   └── SKILL.md
@@ -73,14 +76,42 @@ shared-skills/
 
 ## 使用方式
 
-### 1. 以 git submodule 引入项目
+### 1. 一行命令快速接入
+
+```bash
+# 在项目根目录执行
+curl -fsSL <shared-skills-raw-url>/scripts/bootstrap-project.sh \
+  | bash -s -- --repo <shared-skills-git-url>
+```
+
+脚本会将本仓库作为 `.shared-skills` submodule 接入，并生成 `.agents/skills-config.json` 和 `.agents/shared-skills.md`。
+
+只接入部分 skill 时，使用 `--skills`：
+
+```bash
+# 短视频项目示例
+bash /path/to/shared-skills/scripts/bootstrap-project.sh \
+  --repo /path/to/shared-skills \
+  --skills video-generation,video-script-generation
+```
+
+可选参数：
+
+| 参数 | 说明 |
+|------|------|
+| `--repo <url-or-path>` | shared-skills git URL 或本地仓库路径，必填 |
+| `--path <submodule-path>` | submodule 路径，默认 `.shared-skills` |
+| `--skills <names>` | 逗号分隔的 skill 名称，仅生成这些 skill 的项目引用 |
+| `--force` | 覆盖重新生成 `.agents/shared-skills.md` |
+
+### 2. 手动以 git submodule 引入项目
 
 ```bash
 # 在项目根目录
 git submodule add <repo-url> .shared-skills
 ```
 
-### 2. 项目 AGENTS.md 中声明引用
+### 3. 项目 AGENTS.md 中声明引用
 
 ```markdown
 ## Skills
@@ -93,7 +124,7 @@ git submodule add <repo-url> .shared-skills
 | 项目特有 Skill | `.agents/skills/workflow-deploy/SKILL.md` | local |
 ```
 
-### 3. 项目内提供参数配置
+### 4. 项目内提供参数配置
 
 在项目根目录创建 `.agents/skills-config.json`：
 
