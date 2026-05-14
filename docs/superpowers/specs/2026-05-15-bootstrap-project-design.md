@@ -2,14 +2,14 @@
 
 ## Goal
 
-Add a one-command onboarding script so a target project can quickly adopt this shared skills repository.
+Add a one-command onboarding script so a target project can quickly adopt this shared skills repository through the project's agent configuration directory.
 
-The script follows the existing README convention:
+The script follows this convention:
 
-- Add this repository as a `.shared-skills` git submodule by default.
-- Create project-local `.agents/skills-config.json` when it does not exist.
-- Generate `.agents/shared-skills.md` with AGENTS/CLAUDE-ready skill references.
-- Keep repeated runs safe and predictable.
+- `.agents/` is the project-local agent configuration root.
+- `.agents/shared-skills/` is the git submodule for this repository.
+- `AGENTS.md` is the human- and agent-readable entry point.
+- `AGENTS.md` contains a script-managed block listing only the selected skills.
 
 ## Recommended Invocation
 
@@ -25,20 +25,28 @@ Local development usage:
 /path/to/shared-skills/scripts/bootstrap-project.sh --repo /path/to/shared-skills
 ```
 
+Short-video-only usage:
+
+```bash
+/path/to/shared-skills/scripts/bootstrap-project.sh \
+  --repo /path/to/shared-skills \
+  --skills video-generation,video-script-generation
+```
+
 ## Scope
 
-The script creates integration scaffolding only. It does not edit the target project's main `AGENTS.md`, `CLAUDE.md`, package files, CI files, or application code.
+The script creates and updates agent integration scaffolding only. It does not edit package files, CI files, application code, or project-specific local skills.
 
-This keeps the operation safe for diverse projects. The generated `.agents/shared-skills.md` is the copyable source of truth for project agent docs.
+It does update `AGENTS.md` because that file is the expected project entry point for agent instructions.
 
 ## CLI
 
 Primary options:
 
 - `--repo <url-or-path>`: required shared-skills git URL or local repository path.
-- `--path <submodule-path>`: optional submodule path, default `.shared-skills`.
-- `--skills <comma-separated-skill-names>`: optional filter for the skills exposed in generated project agent files.
-- `--force`: optional overwrite for generated `.agents/shared-skills.md`.
+- `--path <submodule-path>`: optional submodule path, default `.agents/shared-skills`.
+- `--skills <comma-separated-skill-names>`: optional filter for the skills referenced in `AGENTS.md`.
+- `--force`: accepted for compatibility; the managed `AGENTS.md` block is always regenerated.
 - `--help`: print usage.
 
 The script runs in the current working directory, which is treated as the target project root.
@@ -52,29 +60,59 @@ The script runs in the current working directory, which is treated as the target
 
 2. Add or validate the submodule.
    - If the target path does not exist, run `git submodule add <repo> <path>`.
-   - If the target path exists and is already a submodule, keep it.
+   - If the target path exists and is already a submodule, run `git submodule update --init`.
    - If the target path exists but is not a submodule, exit with a clear error.
 
-3. Create `.agents/skills-config.json`.
-   - If it does not exist, write a minimal starter config matching README placeholders.
-   - If it exists, leave it untouched.
+3. Discover selected skills.
+   - Scan `<submodule-path>/skills/*/SKILL.md`.
+   - Read `name` and `description` from each skill's front matter.
+   - If `--skills` is provided, include only those names.
+   - If `--skills` is omitted, include all shared skills.
+   - If any requested skill is missing, exit non-zero.
 
-4. Generate `.agents/shared-skills.md`.
-   - Include a Markdown table of shared skill entry paths under the chosen submodule path.
-   - When `--skills` is provided, include only those named skills.
-   - When `--skills` is omitted, include all shared skills.
-   - Include a short note telling users to reference or merge it from `AGENTS.md`.
-   - If the file exists, leave it untouched unless `--force` is set.
+4. Create `.agents/skills-config.json`.
+   - If it does not exist, write a minimal starter config with the selected skill names.
+   - If it exists, leave it untouched because this file may contain project-specific configuration.
 
-5. Print concise completion instructions.
+5. Create or update `AGENTS.md`.
+   - If `AGENTS.md` does not exist, create it.
+   - Insert a managed block at the end when no managed block exists.
+   - Replace only the managed block when it already exists.
+   - Preserve all content outside the managed block.
+   - The block uses these markers:
+
+```markdown
+<!-- shared-skills:start -->
+<!-- shared-skills:end -->
+```
+
+6. Print concise completion instructions.
    - Show created or preserved files.
    - Show suggested files to review and commit.
 
+## AGENTS.md Managed Block
+
+The managed block has this shape:
+
+```markdown
+<!-- shared-skills:start -->
+## Shared Skills
+
+This project uses shared skills from `.agents/shared-skills`.
+
+| Skill | Entry | Description |
+|-------|-------|-------------|
+| `video-generation` | `.agents/shared-skills/skills/video-generation/SKILL.md` | 短视频生产全流程 |
+<!-- shared-skills:end -->
+```
+
 ## Idempotency Rules
 
-Repeated runs must not duplicate submodule config, overwrite local project config, or rewrite generated documentation unless the user explicitly passes `--force`.
+Repeated runs must not duplicate submodule config or duplicate `AGENTS.md` content.
 
-Existing `.agents/skills-config.json` is never overwritten by this script. Configuration is project-specific and must remain under project control.
+`AGENTS.md` content outside the managed block is never modified.
+
+Existing `.agents/skills-config.json` is never overwritten by this script.
 
 ## Error Handling
 
@@ -84,21 +122,23 @@ The script exits non-zero for:
 - Not running inside a git work tree.
 - Missing `--repo`.
 - Target submodule path exists but is not a git submodule.
+- Requested skill not found.
 - `git submodule add` failure.
 
 Each failure prints one actionable message and preserves the underlying git error where helpful.
 
 ## Testing
 
-Tests use temporary git repositories and a local bare clone of this repository.
+Tests use temporary git repositories and a local source repository fixture.
 
 Required cases:
 
-- First run creates `.gitmodules`, the submodule path, `.agents/skills-config.json`, and `.agents/shared-skills.md`.
-- Second run succeeds without duplicating or corrupting generated files.
+- First run creates `.gitmodules`, `.agents/shared-skills`, `.agents/skills-config.json`, and `AGENTS.md`.
+- `--skills video-generation,video-script-generation` writes only those skills into `AGENTS.md` and starter config.
+- Default run includes all shared skills in `AGENTS.md`.
+- Existing `AGENTS.md` content is preserved while the managed block is inserted.
+- Repeated run replaces the managed block instead of duplicating it.
 - Existing `.agents/skills-config.json` is preserved.
-- Existing `.agents/shared-skills.md` is preserved by default and overwritten with `--force`.
-- `--skills video-generation,video-script-generation` writes only short-video skill references.
 - Running outside a git repository fails.
 - Existing non-submodule target path fails.
 
@@ -108,6 +148,6 @@ Expected implementation files:
 
 - `scripts/bootstrap-project.sh`
 - `scripts/bootstrap-project.test.sh`
-- `README.md` usage section update
+- `README.md`
 
 The tests are shell-based to avoid requiring Node.js, Python, or project package managers in target repositories.

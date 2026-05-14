@@ -4,7 +4,7 @@
 
 ## 设计理念
 
-**Skill-First**：所有通用 skill 抽离到此仓库，各项目通过 git submodule 引用，并在项目内的 `.agents/skills-config.json` 提供参数化配置。
+**Skill-First**：所有通用 skill 抽离到此仓库，各项目通过 `.agents/shared-skills` git submodule 引用，并在项目内的 `AGENTS.md` 按需声明入口。
 
 ## 目录结构
 
@@ -84,7 +84,7 @@ curl -fsSL <shared-skills-raw-url>/scripts/bootstrap-project.sh \
   | bash -s -- --repo <shared-skills-git-url>
 ```
 
-脚本会将本仓库作为 `.shared-skills` submodule 接入，并生成 `.agents/skills-config.json` 和 `.agents/shared-skills.md`。
+脚本会将本仓库作为 `.agents/shared-skills` submodule 接入，生成 `.agents/skills-config.json`，并创建或更新项目根目录的 `AGENTS.md`。
 
 只接入部分 skill 时，使用 `--skills`：
 
@@ -100,28 +100,32 @@ bash /path/to/shared-skills/scripts/bootstrap-project.sh \
 | 参数 | 说明 |
 |------|------|
 | `--repo <url-or-path>` | shared-skills git URL 或本地仓库路径，必填 |
-| `--path <submodule-path>` | submodule 路径，默认 `.shared-skills` |
-| `--skills <names>` | 逗号分隔的 skill 名称，仅生成这些 skill 的项目引用 |
-| `--force` | 覆盖重新生成 `.agents/shared-skills.md` |
+| `--path <submodule-path>` | submodule 路径，默认 `.agents/shared-skills` |
+| `--skills <names>` | 逗号分隔的 skill 名称，仅在 `AGENTS.md` 引用这些 skill |
+| `--force` | 兼容参数；`AGENTS.md` 的托管区块每次都会重建 |
 
 ### 2. 手动以 git submodule 引入项目
 
 ```bash
 # 在项目根目录
-git submodule add <repo-url> .shared-skills
+git submodule add <repo-url> .agents/shared-skills
 ```
 
 ### 3. 项目 AGENTS.md 中声明引用
 
-```markdown
-## Skills
+脚本会自动创建或更新下面这个托管区块。已有 `AGENTS.md` 中该区块之外的内容不会被修改。
 
-| Skill | 入口 | 来源 |
-|-------|------|------|
-| NestJS 编码规则 | `.shared-skills/skills/coding-nestjs/SKILL.md` | shared |
-| 提交规范 | `.shared-skills/skills/workflow-commit/SKILL.md` | shared |
-| Docker 部署流程 | `.shared-skills/skills/workflow-deploy/SKILL.md` | shared |
-| 项目特有 Skill | `.agents/skills/workflow-deploy/SKILL.md` | local |
+```markdown
+<!-- shared-skills:start -->
+## Shared Skills
+
+This project uses shared skills from `.agents/shared-skills`.
+
+| Skill | Entry | Description |
+|-------|-------|-------------|
+| `coding-nestjs` | `.agents/shared-skills/skills/coding-nestjs/SKILL.md` | NestJS 服务端编码规则 |
+| `workflow-commit` | `.agents/shared-skills/skills/workflow-commit/SKILL.md` | Git 提交规范 |
+<!-- shared-skills:end -->
 ```
 
 ### 4. 项目内提供参数配置
@@ -188,9 +192,10 @@ Agent 读取 SKILL.md 时应同时读取项目的 `skills-config.json`，将占�
 
 ```bash
 # 在项目中更新 submodule 到最新
-cd .shared-skills
+cd .agents/shared-skills
 git pull origin main
 cd ..
-git add .shared-skills
+cd ..
+git add .agents/shared-skills
 git commit -m "chore: update shared-skills submodule"
 ```

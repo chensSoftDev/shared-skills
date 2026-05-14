@@ -2,31 +2,34 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build and verify a one-command bootstrap script that adds shared-skills to a target project and can expose only selected skills.
+**Goal:** Update the bootstrap script so projects use `.agents/shared-skills` as the submodule path and `AGENTS.md` as the selected-skill entry point.
 
-**Architecture:** A Bash CLI runs from the target project root, adds shared-skills as a git submodule, writes safe `.agents` scaffolding, and generates skill references from the submodule's `skills/*/SKILL.md` files. Tests create temporary git repositories and exercise the script through its public CLI.
+**Architecture:** A Bash CLI runs from the target project root, adds shared-skills as a git submodule under `.agents/`, scans selected skills, writes starter `.agents/skills-config.json`, and creates or updates a marked block in `AGENTS.md`. Shell tests create temporary git repositories and verify public CLI behavior.
 
-**Tech Stack:** Bash, git submodules, shell test script.
+**Tech Stack:** Bash, git submodules, Markdown managed block replacement, shell tests.
 
 ---
 
-### Task 1: Shell Test Coverage
+### Task 1: Update Failing Tests
 
 **Files:**
-- Create: `scripts/bootstrap-project.test.sh`
+- Modify: `scripts/bootstrap-project.test.sh`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Change expected default submodule path**
 
-Create a shell test runner that builds temporary source and target git repositories, runs `scripts/bootstrap-project.sh`, and asserts:
+Tests should expect `.agents/shared-skills`, not `.shared-skills`.
 
-- first run creates `.gitmodules`, `.shared-skills`, `.agents/skills-config.json`, and `.agents/shared-skills.md`
-- `--skills video-generation,video-script-generation` filters generated references and config
-- repeated runs preserve existing project config and docs
-- `--force` regenerates `.agents/shared-skills.md`
-- non-git directories fail
-- existing non-submodule target paths fail
+- [ ] **Step 2: Add AGENTS.md assertions**
 
-- [ ] **Step 2: Run test to verify it fails**
+Tests should assert:
+
+- first run creates `AGENTS.md`
+- selected skills are listed in `AGENTS.md`
+- unselected skills are not listed in `AGENTS.md`
+- existing `AGENTS.md` content is preserved
+- repeated runs keep exactly one managed block
+
+- [ ] **Step 3: Run tests and confirm RED**
 
 Run:
 
@@ -34,33 +37,36 @@ Run:
 bash scripts/bootstrap-project.test.sh
 ```
 
-Expected: FAIL because `scripts/bootstrap-project.sh` does not exist yet.
+Expected: FAIL because the current script still writes `.shared-skills` and `.agents/shared-skills.md`.
 
-### Task 2: Bootstrap Script
+### Task 2: Update Bootstrap Script
 
 **Files:**
-- Create: `scripts/bootstrap-project.sh`
+- Modify: `scripts/bootstrap-project.sh`
 
-- [ ] **Step 1: Implement minimal script**
+- [ ] **Step 1: Change default submodule path**
 
-Implement options:
+Set `SUBMODULE_PATH=".agents/shared-skills"` and update usage text.
 
-- `--repo <url-or-path>`
-- `--path <submodule-path>` defaulting to `.shared-skills`
-- `--skills <comma-separated-skill-names>`
-- `--force`
-- `--help`
+- [ ] **Step 2: Replace shared-skills doc generation with AGENTS.md generation**
 
-Implement behavior:
+Add a `write_agents_md` function that:
 
-- validate `git`, target git work tree, and `--repo`
-- add or initialize the submodule using `git -c protocol.file.allow=always submodule add`
-- reject an existing target path that is not a submodule
-- create `.agents/skills-config.json` without overwriting it
-- generate `.agents/shared-skills.md` from selected `SKILL.md` files
-- preserve `.agents/shared-skills.md` unless `--force` is set
+- creates `AGENTS.md` when missing
+- inserts a block between `<!-- shared-skills:start -->` and `<!-- shared-skills:end -->`
+- replaces only that block on repeated runs
+- preserves content outside the block
 
-- [ ] **Step 2: Run test to verify it passes**
+- [ ] **Step 3: Update summary output**
+
+Summary should list:
+
+- `.gitmodules`
+- `.agents/shared-skills`
+- `.agents/skills-config.json`
+- `AGENTS.md`
+
+- [ ] **Step 4: Run tests and confirm GREEN**
 
 Run:
 
@@ -70,26 +76,16 @@ bash scripts/bootstrap-project.test.sh
 
 Expected: PASS.
 
-### Task 3: README Usage
+### Task 3: Update README
 
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Document one-command onboarding**
+- [ ] **Step 1: Replace old structure examples**
 
-Add a concise section showing:
+Document `.agents/shared-skills` and `AGENTS.md` managed references.
 
-```bash
-curl -fsSL <shared-skills-raw-url>/scripts/bootstrap-project.sh | bash -s -- --repo <shared-skills-git-url>
-```
-
-and the short-video filtered form:
-
-```bash
-bash /path/to/shared-skills/scripts/bootstrap-project.sh --repo /path/to/shared-skills --skills video-generation,video-script-generation
-```
-
-- [ ] **Step 2: Run test again**
+- [ ] **Step 2: Run tests again**
 
 Run:
 
@@ -99,12 +95,16 @@ bash scripts/bootstrap-project.test.sh
 
 Expected: PASS.
 
-### Task 4: Short Video Project Onboarding
+### Task 4: Repair short-video Integration
 
 **Files:**
 - Modify target project: `/Users/chensheng/Desktop/workspace/short-video`
 
-- [ ] **Step 1: Run bootstrap script in target project**
+- [ ] **Step 1: Remove previous root-level integration created by the old script**
+
+Remove root `.shared-skills` submodule, root `skills/` symlinks, and `.agents/shared-skills.md`.
+
+- [ ] **Step 2: Run corrected bootstrap script**
 
 Run:
 
@@ -115,17 +115,11 @@ cd /Users/chensheng/Desktop/workspace/short-video
   --skills video-generation,video-script-generation
 ```
 
-Expected: `.agents/shared-skills.md` references only `video-generation` and `video-script-generation`.
+Expected:
 
-- [ ] **Step 2: Start the video workflow for 《矛盾论》**
-
-Create the output directory and script JSON:
-
-```bash
-mkdir -p output/video-generation/maodunlun
-```
-
-Then produce `output/video-generation/maodunlun/script.json` using the video-script-generation rules, followed by video-generation rendering if required dependencies and assets are available.
+- `.agents/shared-skills` exists as the submodule
+- `AGENTS.md` references only `video-generation` and `video-script-generation`
+- `.agents/skills-config.json` keeps or creates those selected skills
 
 ### Task 5: Final Verification
 
@@ -148,11 +142,12 @@ Run:
 
 ```bash
 cd /Users/chensheng/Desktop/workspace/short-video
-test -f .agents/shared-skills.md
-test -f .agents/skills-config.json
-grep -q "video-generation" .agents/shared-skills.md
-grep -q "video-script-generation" .agents/shared-skills.md
-! grep -q "coding-nextjs" .agents/shared-skills.md
+test -d .agents/shared-skills
+test -f AGENTS.md
+grep -q "video-generation" AGENTS.md
+grep -q "video-script-generation" AGENTS.md
+! grep -q "coding-nextjs" AGENTS.md
+! test -e .shared-skills
 ```
 
 Expected: all checks pass.

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO=""
-SUBMODULE_PATH=".shared-skills"
+SUBMODULE_PATH=".agents/shared-skills"
 SKILLS_FILTER=""
 FORCE=0
 
@@ -13,9 +13,9 @@ Usage:
 
 Options:
   --repo <url-or-path>       Shared-skills git URL or local repository path. Required.
-  --path <submodule-path>    Submodule path in the target project. Default: .shared-skills
-  --skills <names>           Comma-separated skill names to expose in .agents files.
-  --force                    Regenerate .agents/shared-skills.md if it already exists.
+  --path <submodule-path>    Submodule path in the target project. Default: .agents/shared-skills
+  --skills <names>           Comma-separated skill names to reference in AGENTS.md.
+  --force                    Accepted for compatibility; AGENTS.md managed block is always regenerated.
   --help                     Show this help.
 
 Examples:
@@ -223,35 +223,90 @@ write_skills_config() {
   echo "Created: $config_file"
 }
 
-write_shared_skills_doc() {
-  local doc_file=".agents/shared-skills.md"
+build_agents_block() {
   local index
 
-  mkdir -p .agents
+  echo "<!-- shared-skills:start -->"
+  echo "## Shared Skills"
+  echo
+  echo "This project uses shared skills from \`$SUBMODULE_PATH\`."
+  echo
+  echo "| Skill | Entry | Description |"
+  echo "|-------|-------|-------------|"
+  for index in "${!SELECTED_SKILL_NAMES[@]}"; do
+    printf '| `%s` | `%s` | %s |\n' \
+      "$(markdown_escape "${SELECTED_SKILL_NAMES[$index]}")" \
+      "$(markdown_escape "${SELECTED_SKILL_FILES[$index]}")" \
+      "$(markdown_escape "${SELECTED_SKILL_DESCRIPTIONS[$index]}")"
+  done
+  echo "<!-- shared-skills:end -->"
+}
 
-  if [[ -f "$doc_file" && "$FORCE" -ne 1 ]]; then
-    echo "Preserved: $doc_file"
+count_marker() {
+  local file="$1"
+  local marker="$2"
+  grep -Fxc "$marker" "$file" 2>/dev/null || true
+}
+
+write_agents_md() {
+  local agents_file="AGENTS.md"
+  local start_marker="<!-- shared-skills:start -->"
+  local end_marker="<!-- shared-skills:end -->"
+  local block_file
+  local temp_file
+  local start_count
+  local end_count
+
+  block_file="$(mktemp)"
+  temp_file="$(mktemp)"
+  build_agents_block > "$block_file"
+
+  if [[ ! -f "$agents_file" ]]; then
+    mv "$block_file" "$agents_file"
+    rm -f "$temp_file"
+    echo "Created: $agents_file"
     return
   fi
 
-  {
-    echo "# Shared Skills"
-    echo
-    echo "This project references shared skills from \`$SUBMODULE_PATH\`."
-    echo
-    echo "Add this file to your agent context directly, or merge the relevant rows into \`AGENTS.md\`."
-    echo
-    echo "| Skill | Entry | Description |"
-    echo "|-------|-------|-------------|"
-    for index in "${!SELECTED_SKILL_NAMES[@]}"; do
-      printf '| `%s` | `%s` | %s |\n' \
-        "$(markdown_escape "${SELECTED_SKILL_NAMES[$index]}")" \
-        "$(markdown_escape "${SELECTED_SKILL_FILES[$index]}")" \
-        "$(markdown_escape "${SELECTED_SKILL_DESCRIPTIONS[$index]}")"
-    done
-  } > "$doc_file"
+  start_count="$(count_marker "$agents_file" "$start_marker")"
+  end_count="$(count_marker "$agents_file" "$end_marker")"
+  if [[ "$start_count" != "$end_count" ]]; then
+    rm -f "$block_file" "$temp_file"
+    die "$agents_file has mismatched shared-skills markers"
+  fi
 
-  echo "Generated: $doc_file"
+  awk -v block_file="$block_file" -v start="$start_marker" -v end="$end_marker" '
+    BEGIN {
+      while ((getline line < block_file) > 0) {
+        block = block line ORS
+      }
+      in_block = 0
+      replaced = 0
+    }
+    $0 == start {
+      printf "%s", block
+      in_block = 1
+      replaced = 1
+      next
+    }
+    $0 == end && in_block {
+      in_block = 0
+      next
+    }
+    !in_block {
+      print
+    }
+    END {
+      if (!replaced) {
+        if (NR > 0) print ""
+        printf "%s", block
+      }
+    }
+  ' "$agents_file" > "$temp_file"
+
+  mv "$temp_file" "$agents_file"
+  rm -f "$block_file"
+  echo "Updated: $agents_file"
 }
 
 print_summary() {
@@ -262,7 +317,7 @@ print_summary() {
   echo "- .gitmodules"
   echo "- $SUBMODULE_PATH"
   echo "- .agents/skills-config.json"
-  echo "- .agents/shared-skills.md"
+  echo "- AGENTS.md"
 }
 
 main() {
@@ -276,7 +331,7 @@ main() {
   ensure_submodule
   collect_skills
   write_skills_config
-  write_shared_skills_doc
+  write_agents_md
   print_summary
 }
 
