@@ -4,18 +4,21 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
-const {
-  buildVideoScript,
-  buildTimeline,
-  createSlug,
-  findSceneAsset,
-  formatSrtTime,
-  loadExternalScript,
-  writeSrt,
-} = require('./generate_video');
+// --- Sub-skill imports ---
+const skillsRoot = path.resolve(__dirname, '..', '..');
+const { buildTimeline, formatSrtTime, writeSrt, roundMs: composeRoundMs } = require(path.join(skillsRoot, 'video-compose', 'scripts', 'compose'));
+const { findSceneAsset, splitText, escapeFilterValue } = require(path.join(skillsRoot, 'video-clip-render', 'scripts', 'render_clip'));
 
+// --- Orchestrator imports ---
+const { buildVideoScript, createSlug, loadExternalScript } = require('./generate_video');
+
+// --- Scene template imports ---
 const { DEFAULTS } = require('./config');
 const { allocateDurations, pickVariant, applyTopic, DEFAULT_SCENE_ROLES } = require('./scene_templates');
+
+// ---------------------------------------------------------------------------
+// Orchestrator / script generation tests
+// ---------------------------------------------------------------------------
 
 test('buildVideoScript creates a script within the configured duration range', () => {
   const scenes = buildVideoScript('为什么人赚不到钱', { seed: 0 });
@@ -54,6 +57,10 @@ test('buildVideoScript uses seed for deterministic variant selection', () => {
   assert.deepEqual(a, b);
 });
 
+// ---------------------------------------------------------------------------
+// Scene template tests
+// ---------------------------------------------------------------------------
+
 test('allocateDurations distributes time by weight', () => {
   const roles = [
     { durationWeight: 1 },
@@ -82,6 +89,10 @@ test('applyTopic replaces all {{topic}} placeholders', () => {
   assert.equal(filled.action, '不变');
 });
 
+// ---------------------------------------------------------------------------
+// video-compose tests
+// ---------------------------------------------------------------------------
+
 test('buildTimeline uses real audio durations when they exceed planned durations', () => {
   const scenes = [
     { scene: 1, duration: 12, dialogue: '第一段', description: '第一幕' },
@@ -100,7 +111,7 @@ test('buildTimeline uses real audio durations when they exceed planned durations
 });
 
 test('writeSrt writes synchronized subtitles from the timeline', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'douyin-srt-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'video-srt-'));
   const outputFile = path.join(dir, 'subtitles.srt');
 
   writeSrt([
@@ -115,8 +126,12 @@ test('writeSrt writes synchronized subtitles from the timeline', () => {
   );
 });
 
+// ---------------------------------------------------------------------------
+// video-clip-render tests
+// ---------------------------------------------------------------------------
+
 test('findSceneAsset resolves numbered scene assets and createSlug is filesystem-safe', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'douyin-assets-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'video-assets-'));
   const assetDir = path.join(dir, 'assets');
   fs.mkdirSync(assetDir);
   fs.writeFileSync(path.join(assetDir, 'scene_02.png'), '');
@@ -127,7 +142,7 @@ test('findSceneAsset resolves numbered scene assets and createSlug is filesystem
 });
 
 test('loadExternalScript loads AI-generated script and fills defaults', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'douyin-script-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'video-script-'));
   const scriptFile = path.join(dir, 'script.json');
   const externalScenes = [
     { role: 'hook', title: '开场', dialogue: '这是AI生成的开场白', description: '描述', action: '动作', duration: 12 },
@@ -144,4 +159,21 @@ test('loadExternalScript loads AI-generated script and fills defaults', () => {
   assert.ok(scenes[0].palette, 'should have auto-assigned palette');
   assert.ok(scenes[1].palette, 'should have auto-assigned palette');
   assert.equal(scenes[0].dialogue, '这是AI生成的开场白');
+});
+
+// ---------------------------------------------------------------------------
+// Text helper tests
+// ---------------------------------------------------------------------------
+
+test('splitText splits long Chinese text into lines', () => {
+  const text = '这是一段非常长的中文文字，需要被分割成多行来显示在视频上。';
+  const result = splitText(text, 18, 5);
+  const lines = result.split('\n');
+  assert.ok(lines.length >= 2, 'should split into multiple lines');
+  assert.ok(lines.every((l) => l.length <= 20), 'each line should be roughly within limit');
+});
+
+test('escapeFilterValue escapes special characters for ffmpeg', () => {
+  assert.equal(escapeFilterValue('a:b,c'), 'a\\:b\\,c');
+  assert.equal(escapeFilterValue("it's"), "it\\'s");
 });
