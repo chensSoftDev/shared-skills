@@ -135,6 +135,9 @@ const PROVIDERS = {
 // ---------------------------------------------------------------------------
 
 async function generateNarration(scene, outputFile, options = {}) {
+  if (fs.existsSync(outputFile)) {
+    return;
+  }
   const provider = options.ttsProvider || 'macos-say';
   const fn = PROVIDERS[provider];
   if (!fn) {
