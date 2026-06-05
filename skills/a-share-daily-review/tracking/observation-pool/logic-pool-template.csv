@@ -1,0 +1,2 @@
+date,code,name,logic_level,expected_scenario,key_catalyst,support_level,resistance_level,key_observation_level,actual_1d_return,actual_3d_return,actual_5d_return,actual_outcome,hit_expectation,notes
+YYYY-MM-DD,000000,示例,硬逻辑,强势延续,已核验催化摘要,待核验,待核验,待核验,待回填,待回填,待回填,待回填,待回填,示例行；生成正式观察池时必须替换或删除
