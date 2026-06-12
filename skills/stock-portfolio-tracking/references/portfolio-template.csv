@@ -1,0 +1,3 @@
+code,name,type,style,buy_date,buy_price,quantity,cost_amount,current_price,pnl_pct,stop_loss,target,logic,status,notes
+000000,示例股票,stock,短线,2026-01-01,10.00,1000,10000.00,待更新,待更新,9.50,11.50,示例买入逻辑,holding,示例行-生成正式持仓时删除
+510300,沪深300ETF,etf,波段,2026-01-01,4.000,5000,20000.00,待更新,待更新,3.800,4.400,示例ETF逻辑,holding,示例行-生成正式持仓时删除
