@@ -25,7 +25,10 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 ## 上下文
 
 - 默认报告模板：`references/report-template.md`。生成完整复盘报告时必须先读取该模板，并保留模板中的数据说明、来源列表、风险声明和未来情景推演章节。
+- 正式报告输出：`output/a-share-daily-review/reports/YYYY-MM-DD.md`。
+- 数据源参考：`references/a-share-data-sources.md`。采集全量涨停池、封板质量、北交所补核、个股行情或公告数据时先读取该文件，并按实际可用来源标注口径。
 - 历史样例数据只用于理解格式，例如 `examples/logic-pool-2026-05-25-example.csv`；生成正式观察池时必须使用 `tracking/observation-pool/logic-pool-template.csv`，不得直接复制样例股票。
+- 复盘联动风险信号模板：`tracking/risk-signals/risk-signals-template.csv`；运行时输出到 `output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`。
 - 用户要求简版输出时，可以压缩个股数量和解释长度，但不能删除数据来源、逻辑档位、证伪条件和非投资建议声明。
 
 ## 工作流
@@ -40,6 +43,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 先做“入池资格”核验，再做归因：
 
+- 采集前读取 `references/a-share-data-sources.md`，按“结构化涨停池 → 市场覆盖核验 → 北交所补核 → 个股行情/公告交叉验证”的顺序记录来源。
 - 对每只候选股先确认交易日当日是否实际涨停，至少用 1 个行情/涨停池来源核对收盘状态。
 - 优先找结构化或可枚举的收盘全量涨停池来源，例如东方财富涨停池接口、同花顺/数据宝全表、交易终端导出的完整列表；不要只靠午盘快讯或题材收评反推全量名单。
 - 对“全量”来源先做市场覆盖检查：这个源到底覆盖了哪些市场段，是否排除了 ST、北交所、退市整理股或只保留某类涨停池产品口径。未确认覆盖范围前，不得把它写成“沪深京全量”。
@@ -137,6 +141,8 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 完整复盘报告必须使用 `references/report-template.md`。报告默认结构：
 
+- 正式报告写入 `output/a-share-daily-review/reports/YYYY-MM-DD.md`；若用户只要求口头简版，也要在对话中说明未生成正式报告文件。
+
 1. 复盘摘要：交易日期、市场环境、涨停数量、主线题材、赚钱/亏钱效应。
 2. 涨停池全表：股票、连板、原因、题材、逻辑档位、封板质量、风险标签。
 3. 题材归类：每类催化、核心股、梯队、持续性和证伪点。
@@ -171,6 +177,19 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 - 记录内容：题材生命周期阶段（发酵/高潮/分化/退潮）、涨停梯队演变、龙头变更轨迹、每日复盘报告关联、证伪条件触发记录。
 - 若题材档案已存在，追加新的时间线记录，不覆盖历史。
 
+### 10. 输出复盘联动风险信号
+
+每日复盘完成后，生成给持仓跟踪 skill 读取的机器可读风险信号：
+
+- 运行时输出：`output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`
+- 模板参考：`tracking/risk-signals/risk-signals-template.csv`
+- 必填字段：`date,code,name,topic,risk_type,signal_level,evidence,source,source_time,report_path,notes`
+- `risk_type` 示例：`topic退潮`、`龙头断板`、`后排批量炸板`、`监管风险`、`公告澄清`、`业绩证伪`、`高位流动性风险`。
+- `signal_level` 只能填 `high`、`medium`、`low`。对持仓可能触发风控的信号标为 `high`。
+- 个股风险必须填写 `code` 和 `name`；题材级风险可留空 `code/name`，但必须填写 `topic`。
+- `evidence` 写事实证据摘要，`source` 写可回溯来源或报告章节，不能只写主观判断。
+- 若当日没有可落地风险信号，生成仅含表头的 CSV，并在报告中说明“无明确复盘联动风险信号”。
+
 ## 周期性工作流（非每日执行）
 
 ### 周度校验报告
@@ -197,7 +216,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 ## 输出
 
-- A 股涨停复盘报告（按选定模式输出）。
+- A 股涨停复盘报告（按选定模式输出到 `output/a-share-daily-review/reports/YYYY-MM-DD.md`）。
 - 涨停原因归类表。
 - 硬逻辑/中性逻辑/擦边逻辑分层。
 - 重点个股 K 线、基本面、消息面、技术面（如启用）和短线情景推演。
@@ -205,6 +224,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 - 按 `references/report-template.md` 生成的约束化报告正文。
 - 逻辑分层观察池 CSV（追踪延续开启时输出到 `output/a-share-daily-review/tracking/observation-pool/`），包含硬逻辑、中性逻辑、擦边逻辑三个档位的全部观察标的，以及关键支撑/压力/观察位。
 - 题材生命周期档案（追踪延续开启时输出到 `output/a-share-daily-review/tracking/topic-registry/`）。
+- 复盘联动风险信号 CSV（输出到 `output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`）。
 
 ## 示例
 
@@ -226,6 +246,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 ## 工具与权限
 
 - 网络搜索和网页读取：核验涨停池、公告、新闻、行情和市场消息。
+- 数据源参考：使用 `references/a-share-data-sources.md` 中的结构化源和降级规则，并在报告中标注实际来源。
 - 行情数据能力（按环境可用性选择）：
   - Kimi CLI：优先使用 `query_stock`。
     - `type=realtime_price`：读取个股实时价格、分钟 K 线、收盘摘要。
@@ -237,7 +258,8 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 ## 自检
 
 - [ ] 明确交易日期、数据更新时间和数据来源。
-- [ ] 完整复盘报告已按 `references/report-template.md` 输出，且保留风险声明和来源列表。
+- [ ] 完整复盘报告已按 `references/report-template.md` 输出到 `output/a-share-daily-review/reports/YYYY-MM-DD.md`，且保留风险声明和来源列表。
+- [ ] 涨停池和北交所补核已按 `references/a-share-data-sources.md` 标注实际来源、覆盖口径和采集时间。
 - [ ] 涨停股清单经过至少 2 类来源核验。
 - [ ] `涨停池全表` 中每一只股票都已核验为“该交易日实际涨停”，没有混入未涨停核心股。
 - [ ] 任何前一交易日涨停、趋势新高、容量中军都已明确挪到题材归类或重点个股卡片，没有伪装成当日涨停。
@@ -251,4 +273,5 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 - [ ] 若启用技术指标验证，已使用当前环境可用的行情能力获取数据，并在报告中标注实际来源和查询时间；没有可靠数据时已标注“待核验”或“暂无可靠数据”。
 - [ ] 若启用追踪延续，已按模板生成逻辑分层观察池 CSV（含硬逻辑、中性逻辑、擦边逻辑三个档位）并保存到 `output/a-share-daily-review/tracking/observation-pool/`。
 - [ ] 若启用追踪延续，已更新题材生命周期档案并保存到 `output/a-share-daily-review/tracking/topic-registry/`。
+- [ ] 已生成复盘联动风险信号 CSV；若无信号，已生成仅含表头的文件并在报告说明。
 - [ ] 逻辑分层观察池中的预判情景（强势延续/分歧换手/退潮证伪）与报告中的情景推演一致。

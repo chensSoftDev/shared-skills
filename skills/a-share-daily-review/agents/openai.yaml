@@ -1,4 +1,0 @@
-interface:
-  display_name: "A股复盘分析"
-  short_description: "A股每日涨停复盘：归因、逻辑强弱、走势和风险推演分析"
-  default_prompt: "Use $a-share-daily-review 分析最近一个A股交易日的涨停股，按原因归类并判断硬逻辑/擦边逻辑，结合K线、基本面、消息面做未来几天情景推演。"
