@@ -1,6 +1,6 @@
 ---
 name: stock-portfolio-tracking
-description: Use when 用户要求登记买入、查看持仓、持仓体检、加减仓决策参考、周末持仓复盘、或提到"看看持仓""我买了""要不要卖""持仓怎么样""本周持仓"等。管理 A 股个股和 ETF 持仓，提供盘中/盘后分析与操作建议。
+description: Use when 用户要求登记买入、查看持仓、盘中/盘后体检、加减仓/止盈止损参考、周末持仓复盘，或提到"看看持仓""我买了""要不要卖""持仓怎么样""本周持仓"等 A 股个股/ETF 持仓问题。
 ---
 
 # A股持仓跟踪与决策辅助
@@ -42,6 +42,7 @@ description: Use when 用户要求登记买入、查看持仓、持仓体检、�
 - 体检快照目录：`output/stock-portfolio-tracking/checks/`
 - 持仓文件模板：`references/portfolio-template.csv`
 - 操作日志模板：`references/trade-log-template.csv`
+- 东方财富数据源说明：`references/eastmoney-data.md`
 - 每日复盘报告目录（联动用）：`output/a-share-daily-review/`
 
 文件职责：
@@ -52,6 +53,21 @@ description: Use when 用户要求登记买入、查看持仓、持仓体检、�
 | `trade-log.csv` | 交易/导入流水 | 只追加买入、加仓、减仓、卖出、初始导入 |
 | `check-log.csv` | 体检摘要索引 | 每次盘中/盘后体检追加一行 |
 | `checks/*.md` | 单次详细体检报告 | 每次体检生成一份 Markdown 快照 |
+
+文件初始化：
+
+- 若 `portfolio.csv` 或 `trade-log.csv` 不存在，按 `references/*.csv` 模板创建到 `output/stock-portfolio-tracking/`。
+- 若 `check-log.csv` 不存在，创建表头：`datetime,period,total_cost,total_market_value,total_pnl,total_pnl_pct,risk_level,focus,source,report_path`。
+- 若 `checks/` 不存在，先创建目录。
+- 运行数据只写 `output/stock-portfolio-tracking/`，不得写入 `.shared-skills` 子模块。
+
+交易更新规则：
+
+- 买入/导入：追加 `trade-log.csv`，在 `portfolio.csv` 新增持仓；若同标的已有持仓，按 `新成本金额=原成本金额+本次金额`、`新数量=原数量+本次数量`、`新成本价=新成本金额/新数量` 更新。
+- 部分减仓：追加 `trade-log.csv` 的 `action=reduce`；实现盈亏按 `卖出价-当前持仓成本价` 乘以卖出数量计算，未提供费用时标注为未扣费毛盈亏；`portfolio.csv` 保留该标的，数量和成本金额按剩余仓位更新，状态保持 `holding`。
+- 全部卖出：追加 `trade-log.csv` 的 `action=sell`、`portfolio_status_after=closed`；`portfolio.csv` 只保留当前持仓，清仓标的从当前持仓文件移除，历史由交易日志保留。
+- 卖出数量大于当前持仓数量时，不得写入文件，必须先让用户确认实际数量。
+- 用户给出的资金面观察、主观判断或执行理由，应摘要写入 `trade-log.csv` 的 `reason` 字段。
 
 ## 工作流
 
@@ -120,6 +136,16 @@ description: Use when 用户要求登记买入、查看持仓、持仓体检、�
 - 小单净流入、大单净流出，标记为散户接盘风险；个股短线需降低追高和隔夜预期。
 - 开盘大单买入多、随后大单卖出占优，标记为“早盘冲高后资金转兑现”，重点看回落是否放量、尾盘能否收回高位。
 - 资金流数据源不一致时，优先写明来源差异；不能把单一 APP 的资金流结论当作确定事实。
+
+资金面数据源与最简路径见 `references/eastmoney-data.md`。当需要使用东方财富接口获取实时行情、资金流、逐笔成交、分时或日 K 时，先读取该引用文件并按其中字段口径解析。
+
+接口失败与降级规则：
+
+- 联网请求失败、空响应、字段缺失、接口限流时，最多重试 2 次；仍失败则在报告中标注“未取到/未核验”，不得把失败写成“无风险”。
+- 资金流接口只取到累计净额时，必须用相邻时间点差值计算分钟净流入；不得把累计值直接当作当分钟流入。
+- 逐笔成交接口若只覆盖最近窗口，必须写明覆盖区间；不得用最近窗口推断全天大单占比。
+- 沿用旧快照中的均线、资金或公告数据时，必须写明旧数据时间和原因；不得冒充本次实时数据。
+- 不同数据源结论冲突时，先标注来源差异，再给条件判断。
 
 每只标的必须输出动态风控表：
 
