@@ -1,5 +1,5 @@
 ---
-name: a-share-daily-review
+name: stock-daily-review
 description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题材归类、硬逻辑/中性/擦边逻辑、K 线走势、基本面、消息面、技术指标或未来 1-3 个交易日短线情景推演。
 ---
 
@@ -25,10 +25,10 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 ## 上下文
 
 - 默认报告模板：`references/report-template.md`。生成完整复盘报告时必须先读取该模板，并保留模板中的数据说明、来源列表、风险声明和未来情景推演章节。
-- 正式报告输出：`output/a-share-daily-review/reports/YYYY-MM-DD.md`。
+- 正式报告输出：`output/stock-daily-review/reports/YYYY-MM-DD.md`。
 - 数据源参考：`references/a-share-data-sources.md`。采集全量涨停池、封板质量、北交所补核、个股行情或公告数据时先读取该文件，并按实际可用来源标注口径。
 - 历史样例数据只用于理解格式，例如 `examples/logic-pool-2026-05-25-example.csv`；生成正式观察池时必须使用 `tracking/observation-pool/logic-pool-template.csv`，不得直接复制样例股票。
-- 复盘联动风险信号模板：`tracking/risk-signals/risk-signals-template.csv`；运行时输出到 `output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`。
+- 复盘联动风险信号模板：`tracking/risk-signals/risk-signals-template.csv`；运行时输出到 `output/stock-daily-review/risk-signals/YYYY-MM-DD.csv`。
 - 用户要求简版输出时，可以压缩个股数量和解释长度，但不能删除数据来源、逻辑档位、证伪条件和非投资建议声明。
 
 ## 工作流
@@ -141,7 +141,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 完整复盘报告必须使用 `references/report-template.md`。报告默认结构：
 
-- 正式报告写入 `output/a-share-daily-review/reports/YYYY-MM-DD.md`；若用户只要求口头简版，也要在对话中说明未生成正式报告文件。
+- 正式报告写入 `output/stock-daily-review/reports/YYYY-MM-DD.md`；若用户只要求口头简版，也要在对话中说明未生成正式报告文件。
 
 1. 复盘摘要：交易日期、市场环境、涨停数量、主线题材、赚钱/亏钱效应。
 2. 涨停池全表：股票、连板、原因、题材、逻辑档位、封板质量、风险标签。
@@ -156,10 +156,10 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 每日报告完成后，将**全部三个档位**（硬逻辑、中性逻辑、擦边逻辑）的观察股沉淀到观察池：
 
-- 运行时输出：`output/a-share-daily-review/tracking/observation-pool/logic-pool-YYYY-MM-DD.csv`
+- 运行时输出：`output/stock-daily-review/tracking/observation-pool/logic-pool-YYYY-MM-DD.csv`
 - 模板参考：`tracking/observation-pool/logic-pool-template.csv`
 - 必填字段：日期、代码、名称、逻辑档位、预判情景（强势延续/分歧换手/退潮证伪）、关键催化、证伪条件、关键支撑位/压力位/观察位。
-- **回填机制**：每日生成新报告前，先检查 `output/a-share-daily-review/tracking/observation-pool/` 目录下是否存在昨日（及前第3日、前第5日）的观察池文件。若存在，按当前工具环境获取对应个股的最新收盘价：Kimi CLI 优先调用 `query_stock`，其他环境使用可靠行情源替代。计算实际涨跌幅并回填到 CSV 中；回填完成后，再生成当日新报告和新观察池。
+- **回填机制**：每日生成新报告前，先检查 `output/stock-daily-review/tracking/observation-pool/` 目录下是否存在昨日（及前第3日、前第5日）的观察池文件。若存在，按当前工具环境获取对应个股的最新收盘价：Kimi CLI 优先调用 `query_stock`，其他环境使用可靠行情源替代。计算实际涨跌幅并回填到 CSV 中；回填完成后，再生成当日新报告和新观察池。
 - 若连续多日未运行导致回填积压，按日期顺序逐批回填，优先回填最近1日的数据。
 
 **为什么三个档位都要追踪？**
@@ -171,7 +171,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 对当日主线题材，更新或新建题材档案：
 
-- 运行时输出目录：`output/a-share-daily-review/tracking/topic-registry/`
+- 运行时输出目录：`output/stock-daily-review/tracking/topic-registry/`
 - 文件命名：`{题材标签}-{首次日期}.md`（题材标签中的特殊字符如 `/` 需替换为 `-`，确保文件名合法）
 - 模板参考：`tracking/topic-registry/topic-lifecycle-template.md`
 - 记录内容：题材生命周期阶段（发酵/高潮/分化/退潮）、涨停梯队演变、龙头变更轨迹、每日复盘报告关联、证伪条件触发记录。
@@ -181,7 +181,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 每日复盘完成后，生成给持仓跟踪 skill 读取的机器可读风险信号：
 
-- 运行时输出：`output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`
+- 运行时输出：`output/stock-daily-review/risk-signals/YYYY-MM-DD.csv`
 - 模板参考：`tracking/risk-signals/risk-signals-template.csv`
 - 必填字段：`date,code,name,topic,risk_type,signal_level,evidence,source,source_time,report_path,notes`
 - `risk_type` 示例：`topic退潮`、`龙头断板`、`后排批量炸板`、`监管风险`、`公告澄清`、`业绩证伪`、`高位流动性风险`。
@@ -196,7 +196,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 每周最后一个交易日收盘后（或次周第一个交易日开盘前），汇总本周观察池数据，生成校验报告：
 
-- 运行时输出：`output/a-share-daily-review/tracking/validation/weekly-validation-YYYY-MM-DD.md`
+- 运行时输出：`output/stock-daily-review/tracking/validation/weekly-validation-YYYY-MM-DD.md`
 - 模板参考：`tracking/validation/weekly-validation-template.md`
 - 核心指标：硬逻辑/中性逻辑/擦边逻辑三档次日胜率、平均收益、盈亏比对比；情景推演命中率；证伪条件回避价值。
 - 若当周样本量不足（如少于10只观察标的），顺延至下周合并统计。
@@ -216,15 +216,15 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 
 ## 输出
 
-- A 股涨停复盘报告（按选定模式输出到 `output/a-share-daily-review/reports/YYYY-MM-DD.md`）。
+- A 股涨停复盘报告（按选定模式输出到 `output/stock-daily-review/reports/YYYY-MM-DD.md`）。
 - 涨停原因归类表。
 - 硬逻辑/中性逻辑/擦边逻辑分层。
 - 重点个股 K 线、基本面、消息面、技术面（如启用）和短线情景推演。
 - 数据来源链接和关键假设。
 - 按 `references/report-template.md` 生成的约束化报告正文。
-- 逻辑分层观察池 CSV（追踪延续开启时输出到 `output/a-share-daily-review/tracking/observation-pool/`），包含硬逻辑、中性逻辑、擦边逻辑三个档位的全部观察标的，以及关键支撑/压力/观察位。
-- 题材生命周期档案（追踪延续开启时输出到 `output/a-share-daily-review/tracking/topic-registry/`）。
-- 复盘联动风险信号 CSV（输出到 `output/a-share-daily-review/risk-signals/YYYY-MM-DD.csv`）。
+- 逻辑分层观察池 CSV（追踪延续开启时输出到 `output/stock-daily-review/tracking/observation-pool/`），包含硬逻辑、中性逻辑、擦边逻辑三个档位的全部观察标的，以及关键支撑/压力/观察位。
+- 题材生命周期档案（追踪延续开启时输出到 `output/stock-daily-review/tracking/topic-registry/`）。
+- 复盘联动风险信号 CSV（输出到 `output/stock-daily-review/risk-signals/YYYY-MM-DD.csv`）。
 
 ## 示例
 
@@ -258,7 +258,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 ## 自检
 
 - [ ] 明确交易日期、数据更新时间和数据来源。
-- [ ] 完整复盘报告已按 `references/report-template.md` 输出到 `output/a-share-daily-review/reports/YYYY-MM-DD.md`，且保留风险声明和来源列表。
+- [ ] 完整复盘报告已按 `references/report-template.md` 输出到 `output/stock-daily-review/reports/YYYY-MM-DD.md`，且保留风险声明和来源列表。
 - [ ] 涨停池和北交所补核已按 `references/a-share-data-sources.md` 标注实际来源、覆盖口径和采集时间。
 - [ ] 涨停股清单经过至少 2 类来源核验。
 - [ ] `涨停池全表` 中每一只股票都已核验为“该交易日实际涨停”，没有混入未涨停核心股。
@@ -271,7 +271,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 - [ ] 未来走势为情景推演，并包含证伪条件和风险提示。
 - [ ] 报告没有确定性荐股、收益承诺或未经标注的传闻。
 - [ ] 若启用技术指标验证，已使用当前环境可用的行情能力获取数据，并在报告中标注实际来源和查询时间；没有可靠数据时已标注“待核验”或“暂无可靠数据”。
-- [ ] 若启用追踪延续，已按模板生成逻辑分层观察池 CSV（含硬逻辑、中性逻辑、擦边逻辑三个档位）并保存到 `output/a-share-daily-review/tracking/observation-pool/`。
-- [ ] 若启用追踪延续，已更新题材生命周期档案并保存到 `output/a-share-daily-review/tracking/topic-registry/`。
+- [ ] 若启用追踪延续，已按模板生成逻辑分层观察池 CSV（含硬逻辑、中性逻辑、擦边逻辑三个档位）并保存到 `output/stock-daily-review/tracking/observation-pool/`。
+- [ ] 若启用追踪延续，已更新题材生命周期档案并保存到 `output/stock-daily-review/tracking/topic-registry/`。
 - [ ] 已生成复盘联动风险信号 CSV；若无信号，已生成仅含表头的文件并在报告说明。
 - [ ] 逻辑分层观察池中的预判情景（强势延续/分歧换手/退潮证伪）与报告中的情景推演一致。

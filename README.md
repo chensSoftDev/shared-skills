@@ -15,7 +15,7 @@ shared-skills/
 │   ├── bootstrap-project.sh
 │   └── bootstrap-project.test.sh
 └── skills/
-    ├── a-share-daily-review/ # A 股每日涨停复盘
+    ├── stock-daily-review/ # A 股每日涨停复盘
     │   ├── SKILL.md
     │   ├── examples/
     │   ├── references/
@@ -63,7 +63,7 @@ shared-skills/
 
 | Skill | 典型触发 | 职责 | subagent 调用 |
 |-------|----------|------|---------------|
-| `a-share-daily-review` | 复盘 A 股涨停、分析题材归类、硬逻辑/擦边逻辑和短线情景推演 | 约束 A 股每日复盘的数据核验、涨停池口径、逻辑分层、风险声明和追踪沉淀 | 否 |
+| `stock-daily-review` | 复盘 A 股涨停、分析题材归类、硬逻辑/擦边逻辑和短线情景推演 | 约束 A 股每日复盘的数据核验、涨停池口径、逻辑分层、风险声明和追踪沉淀 | 否 |
 | `coding-miniapp` | 编写或修改 `miniapp/` 小程序代码 | 约束小程序 UI、API 基址、交互、数量格式和写操作配套要求 | 否 |
 | `coding-nestjs` | 编写或修改 NestJS 服务端代码 | 约束安全、鉴权、迁移、精度、审计日志、事务和验证要求 | 否 |
 | `coding-nextjs` | 编写或修改 `apps/web`、`apps/admin` 前端代码 | 约束设计系统、token、双语、环境变量和确认交互 | 否 |

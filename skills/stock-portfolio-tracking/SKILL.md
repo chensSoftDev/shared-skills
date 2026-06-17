@@ -45,8 +45,8 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 - 操作日志模板：`references/trade-log-template.csv`
 - 东方财富数据源说明：`references/eastmoney-data.md`
 - 持仓体检框架：`references/check-framework.md`。完整体检、动态止盈止损、资金面判读、个股/ETF 分框架分析或操作决策参考时必须读取。
-- 每日复盘报告目录（联动用）：`output/a-share-daily-review/`
-- 每日复盘风险信号目录（优先联动）：`output/a-share-daily-review/risk-signals/`
+- 每日复盘报告目录（联动用）：`output/stock-daily-review/`
+- 每日复盘风险信号目录（优先联动）：`output/stock-daily-review/risk-signals/`
 
 文件职责：
 
@@ -187,7 +187,7 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 
 #### 步骤
 
-1. 优先读取 `output/a-share-daily-review/risk-signals/` 下最新交易日 CSV，字段至少包含 `code,topic,risk_type,evidence,signal_level`。
+1. 优先读取 `output/stock-daily-review/risk-signals/` 下最新交易日 CSV，字段至少包含 `code,topic,risk_type,evidence,signal_level`。
 2. 若风险信号 CSV 不存在，再降级读取最新复盘报告中的题材退潮信号、证伪条件触发和风险名单。
 3. 与当前持仓文件交叉匹配：个股风险按 `code` 匹配；题材级风险按持仓 `logic/notes`、ETF 跟踪方向或用户补充题材匹配。
 4. 若存在匹配：

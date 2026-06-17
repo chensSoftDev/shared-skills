@@ -1,2 +1,0 @@
-date,code,name,topic,risk_type,signal_level,evidence,source,source_time,report_path,notes
-YYYY-MM-DD,000000,示例,机器人,topic退潮,high,龙头断板且后排批量炸板,来源链接或报告章节,YYYY-MM-DD HH:mm,output/a-share-daily-review/reports/YYYY-MM-DD.md,示例行；生成正式风险信号时必须替换或删除
