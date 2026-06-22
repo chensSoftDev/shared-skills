@@ -1,0 +1,3 @@
+display_name: 股票数据基础层
+short_description: 字段级取数、来源优先级、fallback、缺失处理和 data packet。
+default_prompt: 为指定股票或 ETF 生成可审计 data packet，列出字段来源、缺口和降级建议。
