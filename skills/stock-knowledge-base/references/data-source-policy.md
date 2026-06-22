@@ -9,6 +9,12 @@
 - 已过期的信息标注 `stale` 或在对应字段写明数据日期。
 - P1/P2 的关键结论必须记录来源。
 
+## 与 stock-data-foundation 的关系
+
+知识库不直接维护字段来源矩阵。字段级来源、fallback、缺失处理以 `stock-data-foundation` 为准。
+
+知识库只负责把 data packet 映射到个股知识卡。若 packet 中字段状态为 `missing` 或 `conflict`，知识卡必须保留该状态，不能主观补齐。
+
 ## P0 数据要求
 
 P0 可使用可靠基础资料源，至少核验：

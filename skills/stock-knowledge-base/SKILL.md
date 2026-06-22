@@ -72,16 +72,18 @@ output/stock-knowledge-base/
 ## 单只股票工作流
 
 1. 明确目标股票和目标等级：P0、P1 或 P2。用户未指定时，按优先级和场景判断。
-2. 读取 `references/stock-card-template.md`、`references/p-level-matrix.md`、`references/field-dictionary.md`。
-3. 读取 `references/data-source-policy.md`，按目标等级确定所需核验强度。
-4. 查询或核验股票身份：代码、名称、交易所、板块、行业。
-5. 检查特殊状态：ST、停牌、退市风险、次新、监管异常。
-6. 若已有卡片，读取旧卡；若没有，按模板新建。
-7. 按目标等级补全字段。无法确认的信息写 `待核验`，不能猜。
-8. 写明 `data_as_of`、`last_reviewed` 和来源。
-9. 更新或追加重大事件流水。不要覆盖旧事件。
-10. 更新 `index.csv` 对应行。
-11. 输出本次更新摘要：新增、升级、风险变化、待核验项。
+2. 调用或读取 `stock-data-foundation` data packet。普通股票 P1/P2 必须至少包含身份、主营、财务、估值、交易、公告、风险字段；ETF P1/P2 必须使用 ETF 字段矩阵。
+3. 若 data packet 为 `partial`，继续生成或更新卡片，但 frontmatter 和第 10 节必须标注 `P2-incomplete` 及缺口清单。
+4. 读取 `references/stock-card-template.md`、`references/p-level-matrix.md`、`references/field-dictionary.md`。
+5. 读取 `references/data-source-policy.md`，按目标等级确定所需核验强度。
+6. 查询或核验股票身份：代码、名称、交易所、板块、行业。
+7. 检查特殊状态：ST、停牌、退市风险、次新、监管异常。
+8. 若已有卡片，读取旧卡；若没有，按模板新建。
+9. 按目标等级补全字段。无法确认的信息写 `待核验`，不能猜。
+10. 写明 `data_as_of`、`last_reviewed` 和来源。
+11. 更新或追加重大事件流水。不要覆盖旧事件。
+12. 更新 `index.csv` 对应行。
+13. 输出本次更新摘要：新增、升级、风险变化、待核验项。
 
 ## 批量工作流
 

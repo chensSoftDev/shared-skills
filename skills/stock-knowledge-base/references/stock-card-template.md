@@ -16,6 +16,10 @@ current_view: "待核验"
 last_reviewed: ""
 data_as_of: ""
 sources: []
+data_packet_path: ""
+data_packet_status: "partial"
+completeness: "P2-incomplete"
+missing_required_fields: []
 ---
 
 # 股票名称（代码）知识卡
@@ -126,6 +130,8 @@ sources: []
 - 当前判断：忽略 / 观察 / 候选 / 持仓跟踪 / 禁入 / 待核验
 - 触发重新关注的条件：
 - 逻辑证伪条件：
+- 数据完整度：
+- 缺失核心字段：
 - 下次复核重点：
 - 下次复核时间：
 

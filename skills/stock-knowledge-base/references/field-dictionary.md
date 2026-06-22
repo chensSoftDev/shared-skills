@@ -62,7 +62,20 @@ current_view: "待核验"
 last_reviewed: ""
 data_as_of: ""
 sources: []
+data_packet_path: ""
+data_packet_status: "complete|partial|failed"
+completeness: "complete|P2-incomplete|P1-incomplete|P0-incomplete"
+missing_required_fields: []
 ```
+
+新增字段说明：
+
+| 字段 | 含义 | 允许值或规则 |
+|------|------|--------------|
+| `data_packet_path` | 对应 `stock-data-foundation` 数据包路径 | `output/stock-data-foundation/packets/YYYY-MM-DD/{code}-{name}.json` |
+| `data_packet_status` | 数据包状态 | `complete` / `partial` / `failed` |
+| `completeness` | 知识卡完整度 | `complete` / `P2-incomplete` / `P1-incomplete` / `P0-incomplete` |
+| `missing_required_fields` | 缺失核心字段 | YAML 列表；CSV 备注中用英文分号摘要 |
 
 ## 写入规则
 
