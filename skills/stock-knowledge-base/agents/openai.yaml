@@ -1,0 +1,4 @@
+interface:
+  display_name: "股票知识库"
+  short_description: "维护全A股票知识卡、P0/P1/P2分层和跨Skill索引"
+  default_prompt: "初始化或更新股票知识库，按P0/P1/P2模板整理个股资料"
