@@ -98,6 +98,7 @@ watchlist-index.csv                   # 全局候选标的索引（可选聚合�
 ### 数据源说明
 
 - **行情数据**：基于实时或盘后数据源（Tushare/Wind/自有接口等），确保数据时效性
+- **字段级数据包**：候选标的深度验证前必须生成或读取 `stock-data-foundation` data packet。若普通股票缺主营、财务、估值、公告任一核心字段，候选状态只能为“观察中/资料缺口”，不能标为“逻辑完整”。ETF 候选必须使用 ETF 字段矩阵。
 - **复盘报告**：`output/stock-daily-review/reports/YYYY-MM-DD.md`（若需联动）
 - **持仓数据**：`output/stock-portfolio-tracking/portfolio.csv`（若需对比）
 
@@ -186,7 +187,8 @@ output/stock-selection/daily-screens/2026-06-16/
 **流程**：
 
 1. **获取标的信息**
-   - 查询目标股票的最新行情、基本面数据
+   - 生成或读取目标标的的 `stock-data-foundation` data packet，普通股票至少覆盖行情、主营、财务、估值、公告、风险字段；ETF 使用 ETF 字段矩阵。
+   - packet 为 `partial` 时，先列出资料缺口，并将候选状态限制为“观察中/资料缺口”。
    - 用户提供的买入逻辑和理由
 
 2. **对标验证清单**
@@ -393,4 +395,3 @@ output/stock-selection/validation-reports/
 - 选股回测功能（验证历史筛选效果）
 - 与持仓跟踪深度集成（自动建议加仓/减仓）
 - Web Dashboard（候选库可视化）
-

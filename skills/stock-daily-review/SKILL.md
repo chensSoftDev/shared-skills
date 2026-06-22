@@ -30,6 +30,7 @@ description: Use when 用户要求复盘 A 股涨停、分析涨停原因、题�
 - 历史样例数据只用于理解格式，例如 `examples/logic-pool-2026-05-25-example.csv`；生成正式观察池时必须使用 `tracking/observation-pool/logic-pool-template.csv`，不得直接复制样例股票。
 - 复盘联动风险信号模板：`tracking/risk-signals/risk-signals-template.csv`；运行时输出到 `output/stock-daily-review/risk-signals/YYYY-MM-DD.csv`。
 - 用户要求简版输出时，可以压缩个股数量和解释长度，但不能删除数据来源、逻辑档位、证伪条件和非投资建议声明。
+- 涨停池、连板、封板质量仍由本 Skill 直接按涨停池数据源采集；但重点个股的主营、财务、估值、公告、特殊状态和风险标签，应优先读取 `stock-data-foundation` data packet。
 
 ## 工作流
 

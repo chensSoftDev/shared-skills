@@ -106,7 +106,10 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 #### 步骤
 
 1. 读取 `output/stock-portfolio-tracking/portfolio.csv`，获取当前所有持仓。
-2. 联网获取每只持仓标的的实时/收盘行情数据。
+2. 对每只持仓标的先生成或读取 `stock-data-foundation` data packet：
+   - `type=stock` 需要 quote、trading、announcement、risk、theme、portfolio_context。
+   - `type=etf` 需要 quote、etf_profile、holdings、premium_discount、liquidity、theme_risk、portfolio_context。
+   - 实时行情字段缺失时，不输出盘中强弱判断，只输出“行情未核验”。
 3. 逐只输出体检结果：
 
 | 检查项 | 内容 |
