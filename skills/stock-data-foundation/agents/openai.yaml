@@ -1,0 +1,6 @@
+interface:
+  display_name: "股票数据基础层"
+  short_description: "字段级取数、来源核验和 data packet"
+  default_prompt: "Use $stock-data-foundation to generate an auditable data packet for a stock or ETF."
+policy:
+  allow_implicit_invocation: true
