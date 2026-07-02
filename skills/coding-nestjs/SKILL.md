@@ -25,6 +25,7 @@ description: NestJS 服务端编码通用规则：安全约定、数据库迁移
 ### 数据库与迁移
 
 - 生产环境禁止依赖 ORM 自动同步 schema；schema 变更通过 migration、SQL 脚本或明确的数据变更步骤管理。
+- 本地 `synchronize: true` 或 `DB_SYNC=true` 能跑不代表生产可上线；任何 schema 变更必须有对应的 migration 或 SQL 脚本。
 - 影响数据库 schema、初始化 SQL、历史数据回填、RBAC 初始化的数据变更，都按需迁移处理。
 - 新增或修改 entity 后，必须同步检查 migration、初始化 SQL 或脚本、部署预检与回滚路径。
 

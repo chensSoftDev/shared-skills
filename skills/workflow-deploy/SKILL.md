@@ -15,13 +15,17 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 
 执行部署前先阅读：
 
-- `DEPLOY.md`（如有）。
+- `DEPLOY.md`（如有）或 `docs/ops/DEPLOY.md`。
 - 项目根目录 `docker-compose*.yml`。
 - 项目 `scripts/deploy-config.sh`。
+- `docs/ops/RELEASE_WORKFLOW.md`（如有）。
+- `docs/ops/HANDOFF_RUNBOOK.md`（如有）。
 
 ### 核心规则
 
-- 优先使用 shared skill 脚本：`.shared-skills/skills/workflow-deploy/scripts/release-dev.sh`、`release-prod.sh`、`release-rollback.sh`。
+- 如项目有本地 release 脚本（`scripts/release-dev.sh`、`scripts/release-prod.sh`、`scripts/release-rollback.sh`），优先使用本地脚本。
+- 如项目无本地 release 脚本，使用 shared skill 脚本：`.shared-skills/skills/workflow-deploy/scripts/release-dev.sh`、`release-prod.sh`、`release-rollback.sh`。
+- 只有排障或维护底层发布逻辑时才直接运行 `docker compose` 命令。
 - 项目自定义构建逻辑写在本地 `scripts/deploy.sh`。
 - 项目自定义 preflight 检查写在本地 `scripts/preflight-hook.sh`。
 - Prod 发布以最近一次成功的 dev release 为门禁，除非用户明确批准 `--allow-without-dev`。
@@ -51,6 +55,8 @@ pwd=<密码>
 ```bash
 sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 ```
+
+> 注意：部分 Shell 环境缺少 TTY，sshpass 可能无法工作；此时需在用户本地终端手动执行 SSH，或先配置 SSH Key 免密登录。
 
 ### 项目配置
 

@@ -49,7 +49,11 @@ shared-skills/
     │   ├── SKILL.md
     │   └── scripts/
     ├── workflow-backlog/    # 需求进度管理（参数化）
-    │   └── SKILL.md
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── change-registration.md
+    │       ├── migration-gate.md
+    │       └── release-planning.md
     ├── workflow-commit/     # Git 提交规范（参数化）
     │   └── SKILL.md
     ├── workflow-deploy/     # Docker 部署流程
@@ -75,7 +79,7 @@ shared-skills/
 | `video-generation` | 用户要求生成短视频并输出 MP4 | 编排器：串联脚本、素材、配音、渲染、合成全流程 | 否 |
 | `video-script-generation` | 用户要求写视频脚本、视频文案或短视频对白 | 生成结构化 `script.json`，供视频生产管道消费 | 是 |
 | `video-tts` | 为视频场景生成配音 | 多 provider TTS（macOS say / 豆包 TTS） | 是 |
-| `workflow-backlog` | 评审需求、推进需求状态、处理 `BACKLOG.md` | 管理需求状态流转、迁移准备、Release Key 和禁止行为 | 否 |
+| `workflow-backlog` | 评审需求、推进需求状态、处理 `BACKLOG.md` | 编排变更登记 → 迁移门禁 → 发布规划全流程（子流程在 references/ 中） | 否 |
 | `workflow-commit` | 生成 commit message 或执行 git commit | 规范 commit type、scope 和自动提交策略 | 否 |
 | `workflow-deploy` | 执行 Docker 部署、重启或回滚 | 使用 release 脚本完成 dev/prod 发布、门禁、smoke 和回滚 | 否 |
 | `workflow-release` | 准备上线、创建 Release、执行生产发布 | 维护 Release 目录、变更日志、迁移、生产计划和健康检查 | 否 |
