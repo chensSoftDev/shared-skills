@@ -65,7 +65,7 @@ Host hongli-server
 ssh -o BatchMode=yes hongli-server "hostname; whoami; pwd"
 ```
 
-`../keys.env` 明文密码文件只允许作为紧急兜底，不作为常规部署入口。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
+`../keys.env` 明文密码文件不作为常规部署入口；如人工恢复该文件，也只允许作为紧急兜底。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
 
 ### 项目配置
 
