@@ -31,32 +31,41 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 - Prod 发布以最近一次成功的 dev release 为门禁，除非用户明确批准 `--allow-without-dev`。
 - 保持自动回滚开启，除非用户明确要求关闭。
 
-### 服务器凭据
+### 服务器连接
 
-服务器 SSH 连接信息存放在工作区上级目录的 `keys.env` 文件中，即相对仓库根目录的 `../keys.env`。
-
-读取方式：
+当前目标是一台共享云服务器，不是 luggage-platform 专用机器。常规部署使用本机 SSH alias：
 
 ```bash
-cat "$(git rev-parse --show-toplevel)/../keys.env"
+ssh hongli-server
 ```
 
-文件格式：
+约定：
 
-```ini
-# linux server
-server=<IP>
-username=<用户名>
-pwd=<密码>
+| 项 | 值 |
+|---|---|
+| SSH alias | `hongli-server` |
+| SSH 用户 | `ai` |
+| 服务器仓库路径 | `/root/codebase/luggage-platform` |
+
+本机 SSH 配置应使用 key 登录和主机指纹校验：
+
+```sshconfig
+Host hongli-server
+  HostName 43.153.152.124
+  User ai
+  IdentityFile ~/.ssh/hongli_server_ai_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+  UserKnownHostsFile ~/.ssh/known_hosts
 ```
 
-连接命令：
+验证方式：
 
 ```bash
-sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
+ssh -o BatchMode=yes hongli-server "hostname; whoami; pwd"
 ```
 
-> 注意：部分 Shell 环境缺少 TTY，sshpass 可能无法工作；此时需在用户本地终端手动执行 SSH，或先配置 SSH Key 免密登录。
+`../keys.env` 明文密码文件只允许作为紧急兜底，不作为常规部署入口。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
 
 ### 项目配置
 
@@ -77,8 +86,8 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 
 ### 1. 确认远端状态
 
-- 从 `../keys.env` 读取服务器 IP、用户名、密码。
-- 确认服务器工作目录路径。
+- 使用 `ssh hongli-server` 登录共享服务器。
+- 确认服务器工作目录路径为 `/root/codebase/luggage-platform`。
 - 确认目标分支和 commit。
 - 如服务器不在目标版本，先同步代码。
 
@@ -87,7 +96,9 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 运行：
 
 ```bash
-.shared-skills/skills/workflow-deploy/scripts/release-dev.sh
+ssh hongli-server
+cd /root/codebase/luggage-platform
+./scripts/release-dev.sh
 ```
 
 预期结果：
@@ -98,12 +109,18 @@ sshpass -p '<pwd>' ssh -o StrictHostKeyChecking=no <username>@<server>
 - smoke 通过。
 - `deploy/dev-releases/latest-success.env` 更新。
 
+当前共享服务器宿主机缺少 `node` 时，允许对 dev 使用 `./scripts/release-dev.sh --skip-preflight`，但 Docker build、backend smoke 和 shadow gateway smoke 仍必须执行。
+
+dev 前端当前以 Docker 容器运行，`release-dev.sh` 只覆盖 account/api/gateway 后端栈；web/admin dev 需按 `docs/ops/DEPLOY.md` 的“Dev 发布当前实际流程”单独构建并替换 `luggage-web-dev`、`luggage-admin-dev`。
+
 ### 3. 执行 Prod 发布
 
 运行：
 
 ```bash
-.shared-skills/skills/workflow-deploy/scripts/release-prod.sh
+ssh hongli-server
+cd /root/codebase/luggage-platform
+./scripts/release-prod.sh
 ```
 
 预期结果：
