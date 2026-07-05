@@ -65,6 +65,8 @@ Host ai
 ssh -o BatchMode=yes ai "hostname; whoami; pwd"
 ```
 
+服务器 SSH 密码登录已禁用；root 密码登录也已禁用。常规部署必须使用 `ssh ai` 的 key 登录。
+
 `../keys.env` 明文密码文件不作为常规部署入口；如人工恢复该文件，也只允许作为紧急兜底。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
 
 ### 项目配置
