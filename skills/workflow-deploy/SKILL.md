@@ -36,24 +36,24 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 当前目标是一台共享云服务器，不是 luggage-platform 专用机器。常规部署使用本机 SSH alias：
 
 ```bash
-ssh hongli-server
+ssh ai
 ```
 
 约定：
 
 | 项 | 值 |
 |---|---|
-| SSH alias | `hongli-server` |
+| SSH alias | `ai` |
 | SSH 用户 | `ai` |
 | 服务器仓库路径 | `/root/codebase/luggage-platform` |
 
 本机 SSH 配置应使用 key 登录和主机指纹校验：
 
 ```sshconfig
-Host hongli-server
+Host ai
   HostName 43.153.152.124
   User ai
-  IdentityFile ~/.ssh/hongli_server_ai_ed25519
+  IdentityFile ~/.ssh/ai_ed25519
   IdentitiesOnly yes
   StrictHostKeyChecking yes
   UserKnownHostsFile ~/.ssh/known_hosts
@@ -62,7 +62,7 @@ Host hongli-server
 验证方式：
 
 ```bash
-ssh -o BatchMode=yes hongli-server "hostname; whoami; pwd"
+ssh -o BatchMode=yes ai "hostname; whoami; pwd"
 ```
 
 `../keys.env` 明文密码文件不作为常规部署入口；如人工恢复该文件，也只允许作为紧急兜底。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
@@ -86,7 +86,7 @@ ssh -o BatchMode=yes hongli-server "hostname; whoami; pwd"
 
 ### 1. 确认远端状态
 
-- 使用 `ssh hongli-server` 登录共享服务器。
+- 使用 `ssh ai` 登录共享服务器。
 - 确认服务器工作目录路径为 `/root/codebase/luggage-platform`。
 - 确认目标分支和 commit。
 - 如服务器不在目标版本，先同步代码。
@@ -96,7 +96,7 @@ ssh -o BatchMode=yes hongli-server "hostname; whoami; pwd"
 运行：
 
 ```bash
-ssh hongli-server
+ssh ai
 cd /root/codebase/luggage-platform
 ./scripts/release-dev.sh
 ```
@@ -118,7 +118,7 @@ dev 前端当前以 Docker 容器运行，`release-dev.sh` 只覆盖 account/api
 运行：
 
 ```bash
-ssh hongli-server
+ssh ai
 cd /root/codebase/luggage-platform
 ./scripts/release-prod.sh
 ```
