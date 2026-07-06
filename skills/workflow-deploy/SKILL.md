@@ -23,7 +23,8 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 
 ### 核心规则
 
-- 如项目有本地 release 脚本（`scripts/release-dev.sh`、`scripts/release-prod.sh`、`scripts/release-rollback.sh`），优先使用本地脚本。
+- 如项目有统一 release 调度入口（例如 `scripts/release.sh`，或 `.agents/skills-config.json` 中 `release.scripts.release` 指向的脚本），优先使用该入口选择 dev/prod 和 local/remote 执行位置。
+- 如项目只有阶段脚本（`scripts/release-dev.sh`、`scripts/release-prod.sh`、`scripts/release-rollback.sh`），在确认已经位于目标服务器项目目录后再直接使用本地脚本。
 - 如项目无本地 release 脚本，先检查 shared skill 脚本是否已通过项目配置泛化；若脚本中出现项目特定镜像、容器、域名或路径，不得直接运行，只能作为模板复制并适配到项目本地 `scripts/`。
 - 只有排障或维护底层发布逻辑时才直接运行 `docker compose` 命令。
 - 项目自定义构建逻辑写在本地 `scripts/deploy.sh`。
@@ -55,6 +56,8 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 | `DEV_API_BASE_URL` | 开发环境 API URL |
 | `PROD_API_BASE_URL` | 生产环境 API URL |
 | `BUILD_COMMANDS` | 构建验证命令 |
+| `DEPLOY_REMOTE_SSH_ALIAS` | 可选，远程执行发布时使用的 SSH alias |
+| `DEPLOY_REMOTE_REPO_PATH` | 可选，远程执行发布时使用的服务器仓库路径 |
 
 ## 工作流
 
@@ -68,7 +71,13 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 
 ### 2. 执行 Dev 发布
 
-运行项目文档指定的 dev release 命令，默认形态：
+运行项目文档指定的 dev release 命令。若存在统一调度入口，默认形态：
+
+```bash
+./scripts/release.sh --stage dev
+```
+
+若项目没有统一调度入口且已经在目标服务器项目目录，默认形态：
 
 ```bash
 ./scripts/release-dev.sh
@@ -88,7 +97,13 @@ dev 前端是否由 release 脚本覆盖以项目 `DEPLOY.md` 为准，不在 sh
 
 ### 3. 执行 Prod 发布
 
-运行项目文档指定的 prod release 命令，默认形态：
+运行项目文档指定的 prod release 命令。若存在统一调度入口，默认形态：
+
+```bash
+./scripts/release.sh --stage prod
+```
+
+若项目没有统一调度入口且已经在目标服务器项目目录，默认形态：
 
 ```bash
 ./scripts/release-prod.sh
