@@ -24,7 +24,7 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 ### 核心规则
 
 - 如项目有本地 release 脚本（`scripts/release-dev.sh`、`scripts/release-prod.sh`、`scripts/release-rollback.sh`），优先使用本地脚本。
-- 如项目无本地 release 脚本，使用 shared skill 脚本：`.shared-skills/skills/workflow-deploy/scripts/release-dev.sh`、`release-prod.sh`、`release-rollback.sh`。
+- 如项目无本地 release 脚本，先检查 shared skill 脚本是否已通过项目配置泛化；若脚本中出现项目特定镜像、容器、域名或路径，不得直接运行，只能作为模板复制并适配到项目本地 `scripts/`。
 - 只有排障或维护底层发布逻辑时才直接运行 `docker compose` 命令。
 - 项目自定义构建逻辑写在本地 `scripts/deploy.sh`。
 - 项目自定义 preflight 检查写在本地 `scripts/preflight-hook.sh`。
@@ -33,41 +33,13 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 
 ### 服务器连接
 
-当前目标是一台共享云服务器，不是 luggage-platform 专用机器。常规部署使用本机 SSH alias：
+服务器 SSH alias、用户、仓库路径、域名和凭据策略必须从项目配置或项目文档读取，优先级：
 
-```bash
-ssh ai
-```
+1. `.agents/skills-config.json` 中的部署配置。
+2. `docs/ops/DEPLOY.md` 或 `DEPLOY.md`。
+3. `docs/ops/RELEASE_WORKFLOW.md`。
 
-约定：
-
-| 项 | 值 |
-|---|---|
-| SSH alias | `ai` |
-| SSH 用户 | `ai` |
-| 服务器仓库路径 | `/root/codebase/luggage-platform` |
-
-本机 SSH 配置应使用 key 登录和主机指纹校验：
-
-```sshconfig
-Host ai
-  HostName 43.153.152.124
-  User ai
-  IdentityFile ~/.ssh/ai_ed25519
-  IdentitiesOnly yes
-  StrictHostKeyChecking yes
-  UserKnownHostsFile ~/.ssh/known_hosts
-```
-
-验证方式：
-
-```bash
-ssh -o BatchMode=yes ai "hostname; whoami; pwd"
-```
-
-服务器 SSH 密码登录已禁用；root 密码登录也已禁用。常规部署必须使用 `ssh ai` 的 key 登录。
-
-`../keys.env` 明文密码文件不作为常规部署入口；如人工恢复该文件，也只允许作为紧急兜底。使用兜底密码前必须确认 SSH key 不可用的原因，并避免在命令行中直接写明文密码。
+shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务器路径。连接前先用项目文档中的只读验证命令确认身份、主机和工作目录。
 
 ### 项目配置
 
@@ -88,18 +60,17 @@ ssh -o BatchMode=yes ai "hostname; whoami; pwd"
 
 ### 1. 确认远端状态
 
-- 使用 `ssh ai` 登录共享服务器。
-- 确认服务器工作目录路径为 `/root/codebase/luggage-platform`。
+- 使用项目文档指定的 SSH alias 登录服务器。
+- 确认服务器工作目录路径与项目文档一致。
 - 确认目标分支和 commit。
-- 如服务器不在目标版本，先同步代码。
+- prod 发布前读取最近一次成功 dev release 快照；目标 checkout 应与该快照 commit 一致，除非用户明确批准绕过 dev 门禁。
+- 如服务器不在目标版本，按项目文档同步代码；不要为了 release 文档或 backlog 收尾提交破坏 dev/prod commit 门禁。
 
 ### 2. 执行 Dev 发布
 
-运行：
+运行项目文档指定的 dev release 命令，默认形态：
 
 ```bash
-ssh ai
-cd /root/codebase/luggage-platform
 ./scripts/release-dev.sh
 ```
 
@@ -111,17 +82,15 @@ cd /root/codebase/luggage-platform
 - smoke 通过。
 - `deploy/dev-releases/latest-success.env` 更新。
 
-当前共享服务器宿主机缺少 `node` 时，允许对 dev 使用 `./scripts/release-dev.sh --skip-preflight`，但 Docker build、backend smoke 和 shadow gateway smoke 仍必须执行。
+宿主机缺少 `node/pnpm` 时，优先运行项目提供的 `preflight --skip-build` 或容器化构建/迁移入口；只有项目文档明确允许时才跳过完整 preflight，且必须保留 Docker build、smoke 和回滚门禁。
 
-dev 前端当前以 Docker 容器运行，`release-dev.sh` 只覆盖 account/api/gateway 后端栈；web/admin dev 需按 `docs/ops/DEPLOY.md` 的“Dev 发布当前实际流程”单独构建并替换 `luggage-web-dev`、`luggage-admin-dev`。
+dev 前端是否由 release 脚本覆盖以项目 `DEPLOY.md` 为准，不在 shared skill 中假设服务名或容器名。
 
 ### 3. 执行 Prod 发布
 
-运行：
+运行项目文档指定的 prod release 命令，默认形态：
 
 ```bash
-ssh ai
-cd /root/codebase/luggage-platform
 ./scripts/release-prod.sh
 ```
 

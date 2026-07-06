@@ -56,6 +56,8 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 - 将 `docs/releases/PENDING/` 下相关迁移草稿移入并整理。
 - 编写 `CHANGELOG.md`，包含变更列表和需求 ID。
 - 编写 `MIGRATION.md`，包含迁移步骤、回滚方式，或明确 `No migration required`。
+- 需迁移发布必须包含生产基线检查：现有 `migrations` 表、已存在的表/索引、初始化 SQL 与待执行 migration 的关系。
+- 如果项目提供 migration preflight 或容器化 migration 脚本，优先写入 `MIGRATION.md` 和 `PROD_PLAN.md`。
 
 ### 3. 编写生产计划
 
@@ -66,6 +68,8 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 
 - 用户批准后按 `PROD_PLAN.md` 执行部署。
 - 记录实际命令、结果、健康检查和异常处理。
+- 遇到 migration 失败时，先记录错误并审计真实数据库状态；对于 MySQL DDL，不假设事务已经完整回滚。
+- 若发布 commit 与 release 文档提交不同，`RELEASE.md` 必须明确记录实际部署 commit，release tag 应绑定实际部署 commit。
 
 ### 5. 收尾
 

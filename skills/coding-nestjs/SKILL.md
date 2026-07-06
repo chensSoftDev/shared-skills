@@ -28,6 +28,8 @@ description: NestJS 服务端编码通用规则：安全约定、数据库迁移
 - 本地 `synchronize: true` 或 `DB_SYNC=true` 能跑不代表生产可上线；任何 schema 变更必须有对应的 migration 或 SQL 脚本。
 - 影响数据库 schema、初始化 SQL、历史数据回填、RBAC 初始化的数据变更，都按需迁移处理。
 - 新增或修改 entity 后，必须同步检查 migration、初始化 SQL 或脚本、部署预检与回滚路径。
+- 面向历史库或由初始化 SQL 起步的环境，migration 要尽量幂等：创建索引/表前检查现有结构，尤其避免重复创建已由初始化 SQL 或外键隐式索引覆盖的索引。
+- 修改历史 migration 前，必须评估 `migrations` 表基线、已执行环境和回滚语义；不要只按空库路径验证。
 
 ### 精度、审计与事务
 
