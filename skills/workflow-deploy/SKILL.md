@@ -23,13 +23,14 @@ description: Docker 部署操作：release 脚本使用、dev/prod 门禁、回�
 
 ### 核心规则
 
-- 如项目有统一 release 调度入口（例如 `scripts/release.sh`，或 `.agents/skills-config.json` 中 `release.scripts.release` 指向的脚本），优先使用该入口选择 dev/prod 和 local/remote 执行位置。
+- 如项目有统一 release 调度入口（例如 `scripts/release.sh`，或 `.agents/skills-config.json` 中 `release.scripts.release` 指向的脚本），优先使用该入口选择 dev/prod、版本和 local/remote 执行位置。
 - 如项目只有阶段脚本（`scripts/release-dev.sh`、`scripts/release-prod.sh`、`scripts/release-rollback.sh`），在确认已经位于目标服务器项目目录后再直接使用本地脚本。
 - 如项目无本地 release 脚本，先检查 shared skill 脚本是否已通过项目配置泛化；若脚本中出现项目特定镜像、容器、域名或路径，不得直接运行，只能作为模板复制并适配到项目本地 `scripts/`。
 - 只有排障或维护底层发布逻辑时才直接运行 `docker compose` 命令。
 - 项目自定义构建逻辑写在本地 `scripts/deploy.sh`。
 - 项目自定义 preflight 检查写在本地 `scripts/preflight-hook.sh`。
 - Prod 发布以最近一次成功的 dev release 为门禁，除非用户明确批准 `--allow-without-dev`。
+- 如项目启用 SemVer 版本发布，dev/prod 发布必须传入项目文档指定的 `--version <VERSION>`，并从 Git tag 发布，不从 branch HEAD 发布生产。
 - 保持自动回滚开启，除非用户明确要求关闭。
 
 ### 服务器连接
@@ -58,6 +59,7 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 | `BUILD_COMMANDS` | 构建验证命令 |
 | `DEPLOY_REMOTE_SSH_ALIAS` | 可选，远程执行发布时使用的 SSH alias |
 | `DEPLOY_REMOTE_REPO_PATH` | 可选，远程执行发布时使用的服务器仓库路径 |
+| `release.versioning` | 可选，项目版本策略，例如 SemVer tag 格式、分支命名和 Draft tag 规则 |
 
 ## 工作流
 
@@ -66,7 +68,7 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 - 使用项目文档指定的 SSH alias 登录服务器。
 - 确认服务器工作目录路径与项目文档一致。
 - 确认目标分支和 commit。
-- prod 发布前读取最近一次成功 dev release 快照；目标 checkout 应与该快照 commit 一致，除非用户明确批准绕过 dev 门禁。
+- prod 发布前读取最近一次成功 dev release 快照；目标 checkout 应与该快照 version 和 commit 一致，除非用户明确批准绕过 dev 门禁。
 - 如服务器不在目标版本，按项目文档同步代码；不要为了 release 文档或 backlog 收尾提交破坏 dev/prod commit 门禁。
 
 ### 2. 执行 Dev 发布
@@ -74,7 +76,7 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 运行项目文档指定的 dev release 命令。若存在统一调度入口，默认形态：
 
 ```bash
-./scripts/release.sh --stage dev
+./scripts/release.sh --stage dev --version <VERSION>
 ```
 
 若项目没有统一调度入口且已经在目标服务器项目目录，默认形态：
@@ -89,7 +91,7 @@ shared skill 不写死某个仓库、主机、IP、SSH alias、域名或服务�
 - 构建镜像。
 - 更新 dev 栈。
 - smoke 通过。
-- `deploy/dev-releases/latest-success.env` 更新。
+- version 化 dev success 快照更新；若项目保留兼容指针，`deploy/dev-releases/latest-success.env` 也会更新。
 
 宿主机缺少 `node/pnpm` 时，优先运行项目提供的 `preflight --skip-build` 或容器化构建/迁移入口；只有项目文档明确允许时才跳过完整 preflight，且必须保留 Docker build、smoke 和回滚门禁。
 
@@ -100,7 +102,7 @@ dev 前端是否由 release 脚本覆盖以项目 `DEPLOY.md` 为准，不在 sh
 运行项目文档指定的 prod release 命令。若存在统一调度入口，默认形态：
 
 ```bash
-./scripts/release.sh --stage prod
+./scripts/release.sh --stage prod --version <VERSION>
 ```
 
 若项目没有统一调度入口且已经在目标服务器项目目录，默认形态：
@@ -112,7 +114,7 @@ dev 前端是否由 release 脚本覆盖以项目 `DEPLOY.md` 为准，不在 sh
 预期结果：
 
 - prod preflight 通过。
-- commit 匹配最近 dev release。
+- version 和 commit 匹配最近 dev release。
 - 部署完成。
 - smoke 通过。
 

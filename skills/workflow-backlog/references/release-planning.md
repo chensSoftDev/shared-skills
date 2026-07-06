@@ -8,20 +8,21 @@
 
 - 相关 BACKLOG 需求已达到 `✅ Dev Confirmed`，或用户明确批准提前规划。
 - 需迁移的需求已有 `docs/releases/PENDING/MIGRATION-<ID>.md`。
-- 用户提供或批准 Release Key。
+- 用户提供或批准 Version / Release Key。
 
-## Release Key 格式
+## Version / Release Key 格式
 
 ```text
-{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN
+vMAJOR.MINOR.PATCH
 ```
 
-- `{{RELEASE_KEY_PREFIX}}` 取自项目 `.agents/skills-config.json` 的 `release.keyPrefix`。
-- 多个需求可合并为一个 Release 一次上线。
+- SemVer 项目使用 `vMAJOR.MINOR.PATCH`，并与 Git tag 一致。
+- Legacy 项目可继续使用 `{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`。
+- 多个需求可合并为一个 Version / Release 一次上线。
 
 ## Release 目录结构
 
-创建 `docs/releases/<KEY>/`，必含文件：
+创建 `docs/releases/<VERSION_OR_KEY>/`，必含文件：
 
 | 文件 | 内容 |
 |------|------|
@@ -43,7 +44,7 @@
 
 ### 1. 创建 Release 目录
 
-- 用户指定 Release Key 后，创建 `docs/releases/<KEY>/`。
+- 用户指定 Version / Release Key 后，创建 `docs/releases/<VERSION_OR_KEY>/`。
 - 从模板复制或按标准结构创建文件。
 
 ### 2. 整理变更和迁移

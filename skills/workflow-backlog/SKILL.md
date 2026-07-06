@@ -7,7 +7,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 ## 角色
 
-管理 `BACKLOG.md` 中需求的生命周期，确保需求状态、Release Key、迁移准备、上线门禁和生产操作都反映真实进展。
+管理 `BACKLOG.md` 中需求的生命周期，确保需求状态、Version / Release Key、迁移准备、上线门禁和生产操作都反映真实进展。
 
 ## 子流程
 
@@ -32,9 +32,9 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 需求 ID：`<类型>-<三位全局序号>`。
 - 类型前缀：`F` 表示功能，`B` 表示 Bug，`I` 表示改进。
 - 序号全局自增。
-- Release Key：`{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`，在 `📋 Prod Planning` 阶段由用户决定，开发阶段不提前绑定。
-- `{{RELEASE_KEY_PREFIX}}` 取自项目 `.agents/skills-config.json` 的 `release.keyPrefix`。
-- 多个需求可合并为一个 Release 一次上线。
+- 若项目启用 SemVer，Version 格式为 `vMAJOR.MINOR.PATCH`，需求进入 `📝 Req Confirmed` 时必须绑定目标版本。
+- 若项目未启用 SemVer，Release Key 可沿用 `{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`，在 `📋 Prod Planning` 阶段由用户决定。
+- 多个需求可合并为一个 Version / Release 一次上线。
 
 ### 状态流转
 
@@ -55,7 +55,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 禁止行为
 
 - 禁止跳过 `📋 Prod Planning` 直接部署生产。
-- 禁止在开发阶段提前绑定 Release Key。
+- 禁止违反项目版本绑定规则；SemVer 项目禁止需求确认后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
 - 禁止需迁移需求在迁移方案未成稿前推进到 `🧪 Dev Deployed` 之后。
 - 禁止未经用户明确批准执行生产迁移、生产部署或回滚。
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
@@ -73,6 +73,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 2. 确认需求
 
 - 用户确认需求后，将状态改为 `📝 Req Confirmed`。
+- 若项目启用 SemVer，在 `Version` 列绑定目标版本。
 - 等待明确开发指令，不自动进入开发。
 
 ### 3. 开始开发
@@ -87,7 +88,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 ### 5. 生产规划
 
-- 用户决定上线批次并指定 Release Key 后，创建 `docs/releases/<KEY>/`。
+- 用户决定上线批次并指定 Version / Release Key 后，创建 `docs/releases/<VERSION_OR_KEY>/`。
 - 整理变更、迁移、发布步骤和回滚入口。
 - 将相关需求状态改为 `📋 Prod Planning`。
 
@@ -108,7 +109,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 ## 自检
 
-- [ ] 状态流转没有跳级或提前绑定 Release Key。
+- [ ] 状态流转没有跳级，Version / Release Key 绑定时机符合项目规则。
 - [ ] 需迁移需求已有迁移草稿并关联具体脚本或 migration。
 - [ ] 生产部署、迁移或回滚前已有用户明确批准。
 - [ ] `BACKLOG.md` 反映真实环境进展，而不只是代码进度。

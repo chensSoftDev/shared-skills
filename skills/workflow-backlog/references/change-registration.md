@@ -19,27 +19,29 @@
 推荐表格列：
 
 ```md
-| ID | 需求描述 | 需迁移 | 当前状态 | Release Key | 备注 |
+| ID | 需求描述 | 需迁移 | 当前状态 | Version | 备注 |
 |----|----------|--------|----------|-------------|------|
 ```
 
 规则：
 
 - `需迁移` 取值 `是`、`否` 或 `待评审`。
-- `Release Key` 在 `📋 Prod Planning` 阶段前保持 `-`。
+- SemVer 项目中，`Version` 在需求进入 `📝 Req Confirmed` 时填写目标版本；`Todo / Reviewing` 阶段可保持 `-`。
+- Legacy 项目中，Release Key 可在 `📋 Prod Planning` 阶段前保持 `-`。
 - 备注应记录证据、路径、迁移草稿、commit 或阻塞原因。
 
 ## 命名规则
 
 - 需求 ID：`<类型>-<三位全局序号>`，全局自增。
 - 类型前缀：`F` 功能，`B` Bug，`I` 改进/重构/文档/流程。
-- `{{RELEASE_KEY_PREFIX}}` 取自项目 `.agents/skills-config.json` 的 `release.keyPrefix`。
+- SemVer 项目的 Version 格式为 `vMAJOR.MINOR.PATCH`。
+- Legacy 项目的 `{{RELEASE_KEY_PREFIX}}` 取自项目 `.agents/skills-config.json` 的 `release.keyPrefix`。
 
 ## 禁止行为
 
 - 禁止在未登记 BACKLOG 行的情况下实施文件变更。
 - 禁止仅因代码完成就推进状态；状态必须反映真实工作流进展。
-- 禁止在开发阶段提前绑定 Release Key。
+- 禁止违反项目版本绑定规则；SemVer 项目禁止需求确认后仍缺少目标 Version。
 
 ## 执行步骤
 
@@ -62,6 +64,7 @@
 ### 4. 确认需求
 
 - 用户确认后，将状态改为 `📝 Req Confirmed`。
+- SemVer 项目同时填写目标 Version。
 - 等待用户明确开发指令，不自动进入开发。
 
 ### 5. 开始开发

@@ -13,7 +13,7 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 
 ### Release 目录
 
-每个 Release Key 对应 `docs/releases/<KEY>/` 下的文件：
+每个项目发布标识对应 `docs/releases/<VERSION_OR_KEY>/` 下的文件。若项目启用 SemVer，优先使用 `vMAJOR.MINOR.PATCH` 作为目录名和 Git tag；历史或未启用 SemVer 的项目可继续使用 Release Key。
 
 | 文件 | 内容 |
 |------|------|
@@ -22,11 +22,12 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 | `PROD_PLAN.md` | 生产执行顺序、门禁、风险点、回滚入口 |
 | `RELEASE.md` | 发布执行结果、健康检查、tag、遗留事项 |
 
-### Release Key
+### Version / Release Key
 
-- 格式：`{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`。
-- Release Key 由用户在 `📋 Prod Planning` 阶段指定。
-- `{{RELEASE_KEY_PREFIX}}` 取自项目 `.agents/skills-config.json` 的 `release.keyPrefix`。
+- 若项目 `.agents/skills-config.json` 中 `release.versioning.enabled = true`，格式为 `vMAJOR.MINOR.PATCH`。
+- SemVer Version 在需求进入 `📝 Req Confirmed` 时绑定；生产规划阶段确认该版本最终包含的需求范围。
+- Git tag 使用同一 Version，已发布成功的 tag 不允许移动。
+- 若项目未启用 SemVer，Release Key 可继续使用 `{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`，并由用户在 `📋 Prod Planning` 阶段指定。
 
 ### 健康检查
 
@@ -48,7 +49,7 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 
 ### 1. 创建 Release 目录
 
-- 用户指定 Release Key 后，创建 `docs/releases/<KEY>/`。
+- 用户指定 Version / Release Key 后，创建 `docs/releases/<VERSION_OR_KEY>/`。
 - 从 `docs/releases/_TEMPLATE/` 复制或按同等结构创建文件。
 
 ### 2. 整理变更和迁移
@@ -73,18 +74,18 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 
 ### 5. 收尾
 
-- 健康检查通过后打 tag：`release/<RELEASE_KEY>`。
+- 健康检查通过后记录 Git tag。SemVer 项目的 `<VERSION>` tag 应在发布前已存在并作为部署源码基线；legacy 项目可在发布成功后创建 `release/<RELEASE_KEY>`。
 - 编写 `RELEASE.md`，记录发布执行结果、健康检查、tag 和遗留事项。
 - 更新所有相关需求状态为 `✔️ Done`。
 
 ## 输入
 
-- 用户指定的 Release Key、上线范围和批准指令。
+- 用户指定的 Version / Release Key、上线范围和批准指令。
 - `BACKLOG.md`、`docs/releases/PENDING/`、项目发布配置和部署脚本。
 
 ## 输出
 
-- 完整的 `docs/releases/<KEY>/` 发布目录。
+- 完整的 `docs/releases/<VERSION_OR_KEY>/` 发布目录。
 - 发布执行记录、健康检查结果、tag 和需求状态更新。
 
 ## 工具与权限
@@ -95,8 +96,8 @@ description: 执行发布流程：创建 Release 目录、编写变更日志和�
 
 ## 自检
 
-- [ ] Release Key 由用户在 `📋 Prod Planning` 阶段指定。
+- [ ] Version / Release Key 的绑定时机符合项目规则。
 - [ ] `CHANGELOG.md`、`MIGRATION.md`、`PROD_PLAN.md`、`RELEASE.md` 齐全。
 - [ ] 需迁移内容已从 `PENDING` 整理到 Release 目录。
 - [ ] 用户批准后才执行生产发布。
-- [ ] 健康检查通过后才打 `release/<RELEASE_KEY>` tag 并更新需求为 `✔️ Done`。
+- [ ] 健康检查通过后才记录/创建项目规则允许的 Git tag 并更新需求为 `✔️ Done`。

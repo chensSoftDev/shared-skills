@@ -20,7 +20,7 @@
 ## 阻塞规则
 
 - 需迁移的需求在迁移草稿未完成前，不得推进到 `🧪 Dev Deployed` 之后。
-- 迁移草稿转为正式 Release 迁移文档前，需用户选定 Release Key。
+- 迁移草稿转为正式 Release 迁移文档前，需按项目规则确认 Version / Release Key。
 - 不得依赖开发环境 ORM 自动同步作为生产可上线的证据。
 - 未经用户明确批准，不得执行生产迁移、部署或回滚。
 
@@ -52,4 +52,4 @@
 ### 4. 维持门禁
 
 - 迁移草稿未完成前，阻止需求状态推进到 `🧪 Dev Deployed` 之后。
-- 用户选定 Release Key 后，迁移草稿转入正式 Release 目录。
+- 用户选定 Version / Release Key 后，迁移草稿转入正式 Release 目录。
