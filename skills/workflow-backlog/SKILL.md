@@ -56,6 +56,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 - 禁止跳过 `📋 Prod Planning` 直接部署生产。
 - 禁止违反项目版本绑定规则；SemVer 项目禁止需求进入 `📝 Req Confirmed` 后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
+- 禁止需求进入 `🧩 Tech Design` 后仍没有对应 `feature/<version>/<topic>` 分支。
 - 禁止需迁移需求在迁移方案未成稿前推进到 `🔨 In Dev` 之后。
 - 禁止未经用户明确批准执行生产迁移、生产部署或回滚。
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
@@ -79,6 +80,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 3. 研发设计
 
 - 将状态改为 `🧩 Tech Design`。
+- 创建或切换到 `feature/<version>/<topic>` 分支；研发设计文档、实施计划、验收文档、编码和测试证据都应在同一需求分支中推进。
 - 输出研发设计、实施计划和验收计划，通常放在需求目录的 `TECH_DESIGN.md`、`IMPLEMENTATION_PLAN.md`、`ACCEPTANCE.md`。
 - 评审影响文件、数据/迁移、API 契约、网关、部署和自动化测试策略。
 - 若需求需迁移，先写 `docs/releases/PENDING/MIGRATION-<ID>.md`。
@@ -87,6 +89,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
 - 确认 `Version` 列已绑定目标版本。
+- 确认当前工作在对应 `feature/<version>/<topic>` 分支，而不是第一次到编码阶段才切分支。
 - 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
 
 ### 5. Dev 部署与自动化测试
@@ -121,6 +124,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ## 自检
 
 - [ ] 状态流转没有跳级，Version / Release Key 绑定时机符合项目规则。
+- [ ] 进入 `🧩 Tech Design` 后已创建或切换到对应 `feature/<version>/<topic>` 分支。
 - [ ] 需迁移需求已有迁移草稿并关联具体脚本或 migration。
 - [ ] `✅ Test Passed` 前已有自动化测试命令、环境、commit 和结果证据。
 - [ ] 生产部署、迁移或回滚前已有用户明确批准。
