@@ -32,8 +32,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 需求 ID：`<类型>-<三位全局序号>`。
 - 类型前缀：`F` 表示功能，`B` 表示 Bug，`I` 表示改进。
 - 序号全局自增。
-- 若项目启用 SemVer，Version 格式为 `vMAJOR.MINOR.PATCH`，需发布或部署的需求进入 `🔨 In Dev` 前必须绑定目标版本。
-- 文档、流程、规范类且无需发布版本的需求，Version 可以保持 `-`。
+- 若项目启用 SemVer，Version 格式为 `vMAJOR.MINOR.PATCH`，需求进入 `📝 Req Confirmed` 时必须绑定目标版本。
 - 若项目未启用 SemVer，Release Key 可沿用 `{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`，在 `📋 Prod Planning` 阶段由用户决定。
 - 多个需求可合并为一个 Version / Release 一次上线。
 
@@ -56,7 +55,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 禁止行为
 
 - 禁止跳过 `📋 Prod Planning` 直接部署生产。
-- 禁止违反项目版本绑定规则；SemVer 项目禁止需发布/部署的需求进入 `🔨 In Dev` 后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
+- 禁止违反项目版本绑定规则；SemVer 项目禁止需求进入 `📝 Req Confirmed` 后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
 - 禁止需迁移需求在迁移方案未成稿前推进到 `🔨 In Dev` 之后。
 - 禁止未经用户明确批准执行生产迁移、生产部署或回滚。
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
@@ -74,6 +73,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 2. 确认需求
 
 - 用户确认需求后，将状态改为 `📝 Req Confirmed`。
+- 若项目启用 SemVer，同时在 `Version` 列绑定目标版本；若目标版本不明确，停留在 `🔍 Reviewing`。
 - 等待研发设计，不自动进入编码开发。
 
 ### 3. 研发设计
@@ -86,7 +86,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 4. 开始编码
 
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
-- 若项目启用 SemVer，需发布或部署的需求进入本状态前必须在 `Version` 列绑定目标版本；文档、流程、规范类且无需发布版本的需求可保持 `-`。
+- 确认 `Version` 列已绑定目标版本。
 - 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
 
 ### 5. Dev 部署与自动化测试
