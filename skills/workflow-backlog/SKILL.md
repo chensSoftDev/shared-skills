@@ -17,7 +17,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 |--------|----------|----------|
 | 变更登记 | `references/change-registration.md` | 任何仓库文件变更前，先登记到 BACKLOG |
 | 迁移门禁 | `references/migration-gate.md` | 评审或开发阶段，判断是否需迁移并创建草稿 |
-| 发布规划 | `references/release-planning.md` | Dev 确认后，用户决定上线批次时创建 Release 文档 |
+| 发布规划 | `references/release-planning.md` | 自动化测试通过后，用户决定上线批次时创建 Release 文档 |
 
 ## 约束
 
@@ -32,14 +32,15 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 需求 ID：`<类型>-<三位全局序号>`。
 - 类型前缀：`F` 表示功能，`B` 表示 Bug，`I` 表示改进。
 - 序号全局自增。
-- 若项目启用 SemVer，Version 格式为 `vMAJOR.MINOR.PATCH`，需求进入 `📝 Req Confirmed` 时必须绑定目标版本。
+- 若项目启用 SemVer，Version 格式为 `vMAJOR.MINOR.PATCH`，需发布或部署的需求进入 `🔨 In Dev` 前必须绑定目标版本。
+- 文档、流程、规范类且无需发布版本的需求，Version 可以保持 `-`。
 - 若项目未启用 SemVer，Release Key 可沿用 `{{RELEASE_KEY_PREFIX}}-YYYYMMDD-NN`，在 `📋 Prod Planning` 阶段由用户决定。
 - 多个需求可合并为一个 Version / Release 一次上线。
 
 ### 状态流转
 
 ```text
-⚪ Todo → 🔍 Reviewing → 📝 Req Confirmed → 🔨 In Dev → 🧪 Dev Deployed → ✅ Dev Confirmed → 📋 Prod Planning → 🚀 Prod Deployed → ✔️ Done
+⚪ Todo → 🔍 Reviewing → 📝 Req Confirmed → 🧩 Tech Design → 🔨 In Dev → 🚚 Dev Deployed → 🧪 Testing → ✅ Test Passed → 📋 Prod Planning → 🚀 Prod Deployed → ✔️ Done
 ```
 
 ### 迁移规则
@@ -55,8 +56,8 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 禁止行为
 
 - 禁止跳过 `📋 Prod Planning` 直接部署生产。
-- 禁止违反项目版本绑定规则；SemVer 项目禁止需求确认后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
-- 禁止需迁移需求在迁移方案未成稿前推进到 `🧪 Dev Deployed` 之后。
+- 禁止违反项目版本绑定规则；SemVer 项目禁止需发布/部署的需求进入 `🔨 In Dev` 后仍缺少目标 Version，legacy 项目禁止开发阶段提前绑定 Release Key。
+- 禁止需迁移需求在迁移方案未成稿前推进到 `🔨 In Dev` 之后。
 - 禁止未经用户明确批准执行生产迁移、生产部署或回滚。
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
 - 禁止在未登记 BACKLOG 行的情况下实施会修改仓库文件的变更（文档/流程小改可同轮登记并推进，但必须有记录）。
@@ -73,26 +74,36 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ### 2. 确认需求
 
 - 用户确认需求后，将状态改为 `📝 Req Confirmed`。
-- 若项目启用 SemVer，在 `Version` 列绑定目标版本。
-- 等待明确开发指令，不自动进入开发。
+- 等待研发设计，不自动进入编码开发。
 
-### 3. 开始开发
+### 3. 研发设计
+
+- 将状态改为 `🧩 Tech Design`。
+- 输出研发设计、实施计划和验收计划，通常放在需求目录的 `TECH_DESIGN.md`、`IMPLEMENTATION_PLAN.md`、`ACCEPTANCE.md`。
+- 评审影响文件、数据/迁移、API 契约、网关、部署和自动化测试策略。
+- 若需求需迁移，先写 `docs/releases/PENDING/MIGRATION-<ID>.md`。
+
+### 4. 开始编码
 
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
-- 若需求需迁移，在 `docs/releases/PENDING/MIGRATION-<ID>.md` 写好迁移草稿，并指明关联脚本或 migration 文件。
+- 若项目启用 SemVer，需发布或部署的需求进入本状态前必须在 `Version` 列绑定目标版本；文档、流程、规范类且无需发布版本的需求可保持 `-`。
+- 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
 
-### 4. Dev 验证
+### 5. Dev 部署与自动化测试
 
-- 部署到 dev 完成后，将状态改为 `🧪 Dev Deployed`。
-- 用户确认 dev 通过后，将状态改为 `✅ Dev Confirmed`。
+- 部署到 dev 完成后，将状态改为 `🚚 Dev Deployed`。
+- 自动化测试开始后，将状态改为 `🧪 Testing`。
+- AI 执行单元测试、集成测试、端到端测试或 smoke，并把命令、环境、commit 和结果写入需求 `ACCEPTANCE.md` 或 Release 文档。
+- 自动化测试通过且证据完整后，将状态改为 `✅ Test Passed`。
+- 如用户要求人工验收，在备注中记录人工确认结果，但不要用人工确认替代自动化测试证据。
 
-### 5. 生产规划
+### 6. 生产规划
 
 - 用户决定上线批次并指定 Version / Release Key 后，创建 `docs/releases/<VERSION_OR_KEY>/`。
 - 整理变更、迁移、发布步骤和回滚入口。
 - 将相关需求状态改为 `📋 Prod Planning`。
 
-### 6. 生产发布
+### 7. 生产发布
 
 - 用户批准上线后，按 `PROD_PLAN.md` 执行发布。
 - 健康检查通过后，将相关需求更新为 `✔️ Done`。
@@ -111,5 +122,6 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 - [ ] 状态流转没有跳级，Version / Release Key 绑定时机符合项目规则。
 - [ ] 需迁移需求已有迁移草稿并关联具体脚本或 migration。
+- [ ] `✅ Test Passed` 前已有自动化测试命令、环境、commit 和结果证据。
 - [ ] 生产部署、迁移或回滚前已有用户明确批准。
 - [ ] `BACKLOG.md` 反映真实环境进展，而不只是代码进度。

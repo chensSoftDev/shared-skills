@@ -6,7 +6,7 @@
 
 进入生产规划前：
 
-- 相关 BACKLOG 需求已达到 `✅ Dev Confirmed`，或用户明确批准提前规划。
+- 相关 BACKLOG 需求已达到 `✅ Test Passed`，或用户明确批准提前规划。
 - 需迁移的需求已有 `docs/releases/PENDING/MIGRATION-<ID>.md`。
 - 用户提供或批准 Version / Release Key。
 
