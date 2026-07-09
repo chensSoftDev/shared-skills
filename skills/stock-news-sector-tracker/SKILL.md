@@ -1,7 +1,7 @@
 ---
 name: stock-news-sector-tracker
 description: 当用户希望建立“消息→板块→个股”的联动跟踪系统，或需要盘前/盘中/盘后基于消息和盘面识别短线机会、跟踪板块异动、生成观察清单时使用。
-version: 1.0.0
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -40,6 +40,8 @@ metadata:
 
 ### 板块状态定义
 
+状态判定细则、评分公式和操作建议见 [`references/scoring-rules.md`](references/scoring-rules.md)。
+
 | 状态 | 含义 | 操作含义 |
 |------|------|----------|
 | 埋伏 | 消息已出，板块/个股未明显反应 | 最佳买点 |
@@ -54,7 +56,7 @@ metadata:
 - 每次扫描必须生成数据表格
 - 必须结合当前持仓（`output/stock-portfolio-tracking/portfolio.csv`）
 - 所有输出必须写入 `output/stock-news-sector-tracker/` 目录
-- 完成后必须提交 git
+- 盘前/盘中扫描可生成简表；盘后扫描必须输出完整报告并提交 git
 
 ## 上下文
 
@@ -63,22 +65,50 @@ metadata:
 ```
 /opt/codebase/stock/
 ├── .agents/
-│   └── sector-tracker-config.json              # 本系统配置
+│   └── skills-config.json                       # 项目统一配置，读取 stockNewsSectorTracker 段
 ├── output/
-│   └── stock-news-sector-tracker/
-│       ├── daily-scans/YYYY-MM-DD.md           # 每日扫描报告
-│       ├── opportunities/{sector}-YYYY-MM-DD.md # 单个机会档案
-│       ├── registry/sector-registry.csv          # 板块池
-│       └── registry/stock-sector-map.csv       # 个股→板块映射
+│   ├── stock-news-sector-tracker/
+│   │   ├── daily-scans/YYYY-MM-DD-{brief|full}.md   # 每日扫描报告（盘前简版/盘后完整版）
+│   │   ├── opportunities/{sector_key}-YYYY-MM-DD.md # 单个机会档案，sector_key 为板块拼音或英文缩写
+│   │   ├── registry/sector-registry.csv             # 板块池
+│   │   └── registry/stock-sector-map.csv            # 个股→板块映射
+│   ├── stock-portfolio-tracking/
+│   │   └── portfolio.csv                            # 当前持仓
+│   ├── stock-selection/
+│   │   └── candidates/candidates-active.csv         # 候选库（机会转候选时写入）
+│   └── stock-data-foundation/
+│       └── packets/                                 # 行情/资金流向字段级数据包
 └── .shared-skills/skills/stock-news-sector-tracker/
     ├── SKILL.md
     └── references/
         ├── workflow.md
         ├── scoring-rules.md
         └── templates/
+            └── daily-scan-template.md
+```
+
+### 配置参数
+
+参见 `.agents/skills-config.json` 中的 `stockNewsSectorTracker` 段：
+
+```json
+"stockNewsSectorTracker": {
+  "schedule": { "pre_market": "08:20", "post_market": "22:00", "intraday": [...] },
+  "data_sources": { "news": [...], "price": [...], "kline": [...], "moneyflow": [...], "index": [...] },
+  "tracking_sectors": [...],
+  "scoring_rules": { "opportunity_score": {...}, "status_map": {...} },
+  "output": {
+    "daily_scan_dir": "output/stock-news-sector-tracker/daily-scans",
+    "opportunity_dir": "output/stock-news-sector-tracker/opportunities",
+    "registry_dir": "output/stock-news-sector-tracker/registry",
+    "portfolio_path": "output/stock-portfolio-tracking/portfolio.csv"
+  }
+}
 ```
 
 ### 默认覆盖板块
+
+默认板块来自 `skills-config.json` 中的 `tracking_sectors`：
 
 - 半导体-封测
 - 半导体-存储
@@ -96,10 +126,15 @@ metadata:
 ### 1. 读取配置和注册表
 
 每次执行时：
-1. 读取 `/.agents/sector-tracker-config.json`
-2. 读取 `output/stock-portfolio-tracking/portfolio.csv`
-3. 读取 `output/stock-news-sector-tracker/registry/sector-registry.csv`
-4. 读取 `output/stock-news-sector-tracker/registry/stock-sector-map.csv`
+1. 读取 `/.agents/skills-config.json` 中的 `stockNewsSectorTracker` 段
+2. 读取 `output/stock-portfolio-tracking/portfolio.csv`（如存在；不存在则视为空仓）
+3. 读取 `output/stock-news-sector-tracker/registry/sector-registry.csv`；**不存在时**，基于 `tracking_sectors` 初始化
+4. 读取 `output/stock-news-sector-tracker/registry/stock-sector-map.csv`；**不存在时**，基于 `tracking_sectors` 中的 `leaders` 初始化
+
+注册表初始化格式：
+
+- `sector-registry.csv`：`name,keywords,etfs,leaders,status,notes`
+- `stock-sector-map.csv`：`code,name,sectors,role,notes`（`role` 可选值：`leader`/`中军`/`后排`/`关联`）
 
 ### 2. 消息扫描
 
@@ -119,6 +154,8 @@ metadata:
 3. 获取资金流向（超大单/大单/中单/小单）
 4. 判断板块状态：埋伏 / 确认 / 加速 / 错过 / 风险 / 调整
 
+数据字段尽量复用 `stock-data-foundation` 的字段级数据包；若数据包不存在，再按配置中的 `data_sources` 实时抓取。
+
 ### 4. 生成每日扫描报告
 
 报告必须包含以下表格：
@@ -129,22 +166,63 @@ metadata:
 5. **次日观察清单**：标的、观察点、触发条件、应对策略
 6. **持仓联动**：结合当前持仓给出提醒
 
+术语说明：
+- **龙头**：板块内最先涨停、涨幅最大、带动性最强的领涨股
+- **中军**：板块内市值较大、走势稳定、对板块情绪有稳定作用的标的
+- **后排**：涨幅靠后、跟风为主、辨识度较低的标的
+- **逻辑档位**：核心（直接受益）/ 次核心（间接受益）/ 擦边（概念沾边）
+
 ### 5. 生成机会档案（可选）
 
-对重点机会单独建立档案：
+对评分 ≥ 7 或状态为“埋伏/确认”的重点机会单独建立档案：
 - 机会定义
 - 消息-板块-个股链路
 - 最佳买点复盘
 - 后续跟踪
+- 事件反应规律沉淀
 - 教训
 
-### 6. 提交 git
+### 6. 与选股系统联动（可选）
 
-所有文件写入后：
-1. `git add .`
-2. `git commit -m "消息-板块-个股联动跟踪：{日期} 扫描报告"`
+对状态为“埋伏”或“确认”且评分 ≥ 7 的机会，若标的未在当前持仓中，可建议写入 `stock-selection` 候选库：
+
+1. 读取 `output/stock-selection/candidates/candidates-active.csv`
+2. 若标的已存在，更新 `source` 和 `score`
+3. 若不存在，追加一行，字段至少包含：
+   - `code,name,source,score,status,buy_logic,stop_loss,risk_level,notes`
+   - `source` 标记为 `sector-tracker:{板块名}`
+4. 输出联动记录到当日扫描报告
+
+### 7. 错误处理与降级
+
+- 任一行情源失败时，按 `data_sources` 中配置的优先级尝试下一个来源
+- 所有来源均失败时，在报告中标注“数据缺失”，不得编造行情
+- 新闻源反爬或不可用时，优先使用已抓取的公告/交易所信息，并标注来源受限
+
+### 8. 提交 git
+
+盘后完整扫描完成后：
+1. `git add output/stock-news-sector-tracker/ .agents/skills-config.json`
+2. `git commit -m "消息-板块-个股联动跟踪：{日期} 盘后扫描报告"`
 3. `git push origin main`
+
+盘中简报若涉及配置或注册表更新，也可单独提交，commit message 使用：
+- `盘中扫描：{日期} {时间} 板块异动简报`
 
 ## 输出模板
 
-见 `references/templates/daily-scan-template.md`。
+见 [`references/templates/daily-scan-template.md`](references/templates/daily-scan-template.md)。
+
+## 自检清单
+
+完成一次盘后扫描后，检查以下项：
+
+- ✅ 是否从 `.agents/skills-config.json` 读取了 `stockNewsSectorTracker` 配置？
+- ✅ 注册表文件是否存在？不存在时是否已初始化？
+- ✅ 消息事件表是否标注了来源和可信度？
+- ✅ 板块响应表是否包含状态、强度评分和资金流向？
+- ✅ 是否结合了当前持仓给出提醒？
+- ✅ 重点机会是否生成了机会档案？
+- ✅ 是否需要将高评分机会同步到 `stock-selection` 候选库？
+- ✅ 盘后报告是否已提交 git？
+- ✅ 所有结论是否附来源链接或数据来源说明？
