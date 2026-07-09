@@ -134,7 +134,8 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 #### 步骤
 
 1. 读取 `output/stock-portfolio-tracking/portfolio.csv`，获取当前所有持仓。
-2. 联网获取每只持仓标的的实时/收盘行情数据。优先使用 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.data_sources` 指定的来源和 fallback 顺序；若配置中未列出某个字段，按以下默认优先级获取：
+2. **空仓检查**：若 `status=holding` 的持仓数量为 0（即当前无持仓），本次任务直接结束。输出格式为："当前无持仓（空仓），跳过本次盘中体检。"，并在此结束，不再执行后续行情获取、个股分析、文件写入等步骤。
+3. 联网获取每只持仓标的的实时/收盘行情数据。优先使用 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.data_sources` 指定的来源和 fallback 顺序；若配置中未列出某个字段，按以下默认优先级获取：
    - 价格：腾讯 qt.gtimg.cn > 新浪财经 hq.sinajs.cn > 东方财富网页
    - K 线：新浪财经 sina_kline > 东方财富 push2his
    - 资金流向：新浪财经 html 页面 > 东方财富资金流向页面
