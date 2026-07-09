@@ -37,6 +37,30 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 
 ## 上下文
 
+### 项目配置
+
+所有路径、体检时间点、数据源、观察字段和规则以项目 `.agents/skills-config.json` 中的 `stockPortfolioTracking` 段为准。执行本 Skill 时必须先读取该配置：
+
+```json
+"stockPortfolioTracking": {
+  "portfolioPath": "output/stock-portfolio-tracking/portfolio.csv",
+  "tradeLogPath": "output/stock-portfolio-tracking/trade-log.csv",
+  "checkLogPath": "output/stock-portfolio-tracking/check-log.csv",
+  "checkReportDir": "output/stock-portfolio-tracking/checks",
+  "watch": {
+    "schedule": { "timepoints": ["09:32", "09:50", "10:30", "11:30", "13:10", "14:00", "14:48"] },
+    "data_sources": { "price": [...], "kline": [...], "moneyflow": [...], "index": [...], "fallback_order": [...] },
+    "observation": { "stock": {...}, "sector": {...}, "market": {...} },
+    "rules": { "stop_loss": {...}, "take_profit": {...}, "add_position": {...}, "hold": {...} },
+    "output": { "snapshot_dir": "output/stock-portfolio-tracking/checks/", "snapshot_template": "{date}-{time}.md" }
+  }
+}
+```
+
+若配置中的字段与本 Skill 文档内嵌表格不一致，**以配置为准**；Skill 文档仅作解释和兜底说明。
+
+### 文件路径
+
 - 持仓数据文件：`output/stock-portfolio-tracking/portfolio.csv`
 - 操作日志文件：`output/stock-portfolio-tracking/trade-log.csv`
 - 体检摘要文件：`output/stock-portfolio-tracking/check-log.csv`
@@ -94,6 +118,8 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 
 #### 推荐触发时间（A 股）
 
+优先读取 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.schedule.timepoints`；若读取失败，使用以下默认时间点：
+
 | 时间 | 意义 |
 |------|------|
 | 9:25 | 竞价结束，短线股方向初判 |
@@ -103,17 +129,22 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 | 14:45 | 尾盘前最后操作窗口 |
 | 15:05 | 收盘后全天总结 |
 
+实际执行时，将当前最接近的 `timepoints` 作为本次体检的参考时间窗口，并在 `check-log.csv` 的 `period` 字段记录。
+
 #### 步骤
 
 1. 读取 `output/stock-portfolio-tracking/portfolio.csv`，获取当前所有持仓。
-2. 联网获取每只持仓标的的实时/收盘行情数据。
-3. 逐只输出体检结果：
+2. 联网获取每只持仓标的的实时/收盘行情数据。优先使用 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.data_sources` 指定的来源和 fallback 顺序；若配置中未列出某个字段，按以下默认优先级获取：
+   - 价格：腾讯 qt.gtimg.cn > 新浪财经 hq.sinajs.cn > 东方财富网页
+   - K 线：新浪财经 sina_kline > 东方财富 push2his
+   - 资金流向：新浪财经 html 页面 > 东方财富资金流向页面
+3. 逐只输出体检结果。观察字段至少覆盖 `stockPortfolioTracking.watch.observation.stock.fields` 中列出的字段；技术面指标使用 `ma_windows` 和 `support_resistance_lookback_days` 配置。
 
 | 检查项 | 内容 |
 |--------|------|
 | 当前盈亏 | 当前价 vs 成本价，浮盈/浮亏百分比和金额 |
-| 止损触发 | 是否已到达或接近止损位（距止损 < 2% 时预警） |
-| 止盈触发 | 是否已到达或接近目标位（距目标 < 2% 时提示） |
+| 止损触发 | 是否已到达或接近止损位（距止损 < 2% 时预警）。触发条件以 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.rules.stop_loss.condition` 为准（默认：`price <= stop_loss_price`），并在报告中区分盘中触发与收盘确认 |
+| 止盈触发 | 是否已到达或接近目标位（距目标 < 2% 时提示）。止盈规则以 `stockPortfolioTracking.watch.rules.take_profit` 为准（默认：触及目标位减半，再涨 5% 清仓； profit_protect 5% 保本，10% 减半，15% 清仓） |
 | 买入逻辑检验 | 原始买入逻辑是否仍然成立（消息面、题材热度、趋势） |
 | 风险信号 | 有无异动公告、监管问询、题材退潮、龙头断板等 |
 | 技术面 | 关键支撑/压力是否被突破，量能变化 |
@@ -143,7 +174,8 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 - 更新 `output/stock-portfolio-tracking/portfolio.csv` 中的当前价、盈亏和备注。
 - 不追加 `trade-log.csv`，除非用户实际发生买入、加仓、减仓或卖出。
 - 追加 `output/stock-portfolio-tracking/check-log.csv`，记录时间、周期、总盈亏、风险等级、重点风险、数据来源和快照路径。
-- 在 `output/stock-portfolio-tracking/checks/` 下生成 `YYYY-MM-DD-HHMM.md` 详细快照。
+- 在 `output/stock-portfolio-tracking/checks/` 下生成快照。快照路径和文件名优先使用 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.output.snapshot_dir` 和 `snapshot_template`（默认：`output/stock-portfolio-tracking/checks/`、`{date}-{time}.md`）。
+- 快照文件名的 `time` 使用本次体检对应的 `watch.schedule.timepoints` 或当前实际时间。
 
 完整体检报告模板见 `references/check-framework.md`。
 
@@ -157,6 +189,8 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 2. 若是已持仓：读取持仓文件获取成本、逻辑、止损止盈位等历史上下文。
 3. 联网获取该标的最新行情、消息面、技术面数据。
 4. 读取 `references/check-framework.md`，按其中“操作决策参考”选择加仓、减仓/止盈或止损框架；必须结合持仓成本、确认纪律线、当前趋势、资金面、题材/板块、消息风险和触发方式。
+   - 加仓条件以 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.rules.add_position.conditions` 为基准（默认：开盘后站稳关键阻力位上方 / 回踩成本区缩量止跌 / 板块共振且资金持续流入），并检查 `max_single_position_pct` 和 `max_add_per_day` 限制。
+   - 当未触发止损、止盈、加仓条件时，适用 `rules.hold`：持有观望。
 
 5. 给出 AI 建议（标注"建议"而非"指令"），附风险提示、触发条件和失效条件。
 6. 用户决策后，更新持仓文件和操作日志；若用户说明了资金面观察或主观判断，应将其原样摘要进 `trade-log.csv` 的 `reason` 字段。
@@ -209,7 +243,7 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 - 更新后的持仓文件 `output/stock-portfolio-tracking/portfolio.csv`
 - 更新后的操作日志 `output/stock-portfolio-tracking/trade-log.csv`
 - 更新后的体检摘要 `output/stock-portfolio-tracking/check-log.csv`
-- 单次详细体检快照 `output/stock-portfolio-tracking/checks/YYYY-MM-DD-HHMM.md`
+- 单次详细体检快照（路径和命名优先使用 `.agents/skills-config.json` 中 `stockPortfolioTracking.watch.output` 配置）
 - 持仓体检报告（按场景输出到对话）
 - 周度持仓复盘总结
 - 复盘联动风险提示
@@ -228,6 +262,7 @@ description: Use when 用户要求登记买入、查看持仓、盘中/盘后体
 
 ## 自检
 
+- [ ] 已读取 `.agents/skills-config.json` 中的 `stockPortfolioTracking` 配置，并按配置执行数据源、时间点和规则。
 - [ ] 持仓文件与操作日志保持一致（买入必须两处都有记录）。
 - [ ] 普通体检没有污染操作日志，已追加体检摘要和详细快照。
 - [ ] 止损/止盈位已由用户确认后记录，未经确认的标注为"待确认"。
