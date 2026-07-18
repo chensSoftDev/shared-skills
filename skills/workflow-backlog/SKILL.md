@@ -1,6 +1,6 @@
 ---
 name: workflow-backlog
-description: 管理需求生命周期：登记变更、迁移评审、状态流转、Release 规划。在评审需求、推进需求状态、处理 BACKLOG.md 时使用。
+description: 管理需求生命周期：跨助手认领与并行协调、登记变更、迁移评审、状态流转、Release 规划。在评审需求、推进需求状态、处理 BACKLOG.md 时使用。
 ---
 
 # 需求进度管理
@@ -26,6 +26,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 所有需求在 `BACKLOG.md` 中跟踪。
 - 完整状态定义、迁移规则和禁止行为以项目 `BACKLOG.md` 为准。
 - 项目配置优先读取 `.agents/skills-config.json`。
+- 若根 `package.json` 存在 `coord` script，同时读取项目 `AGENTS.md` 和并行协调手册（通常为 `docs/ops/PARALLEL_COORDINATION.md`）；项目规则优先于本 skill 的通用默认。
 
 ### 命名规则
 
@@ -41,6 +42,20 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 ```text
 ⚪ Todo → 🔍 Reviewing → 📝 Req Confirmed → 🧩 Tech Design → 🔨 In Dev → 🚚 Dev Deployed → 🧪 Testing → ✅ Test Passed → 📋 Prod Planning → 🚀 Prod Deployed → ✔️ Done
 ```
+
+### 跨助手并行协调（项目启用 `pnpm coord` 时）
+
+- 每个独立 Codex/Kimi/Claude Code/人工会话先执行 `pnpm coord session init --agent <tool> --user <user> --json`，并设置返回的 `COORD_SESSION_ID`。
+- 新需求在修改 BACKLOG 前先执行 `pnpm coord requirement claim --type <I|F|B> --title <title> --profile <runtime|tooling|governance> --json`，禁止本地扫描后手算 ID。
+- Version 确认后执行 `pnpm coord requirement bind-version <ID> <VERSION> --json`，再用 `pnpm coord worktree create <ID> --topic <topic> --json` 创建需求独立 worktree。
+- 同一需求的子 agent 继承主 workstream，使用 `pnpm coord worktree join <ID> --path <absolute-path> --json`；不同需求必须使用不同 branch 和 worktree。
+- 开发前用 `pnpm coord requirement declare-resources` 声明文件、服务、数据库表、配置 key、共享资源与 `--depends-on`；缺失依赖或循环依赖必须停止。
+- 本地 lint/build/单测不需要 lease。dev/prod 部署、共享环境 smoke/E2E 必须持有对应 lease：`pnpm coord lock acquire`、`pnpm coord lock renew`、`pnpm coord lock assert`、`pnpm coord lock release`。
+- runtime 成功部署后必须记录匹配 requirement/Version/commit/services 的部署快照；项目支持时使用 `pnpm coord deployment record <dev|prod> ...`。
+- tooling/governance 可跳过业务 dev/prod 部署，但不得跳过 `🧪 Testing -> ✅ Test Passed` 和机器测试证据。
+- 远程结果不确定（exit 15）时必须先执行 `pnpm coord reconcile --operation <operation-id> --json`；coordination 已推进但 BACKLOG 投影失败时执行 `pnpm coord reconcile <ID> --json`。
+- `main` 使用 PR required checks 与 Merge Queue 作为最终串行点；若仓库能力不支持 Merge Queue，使用 strict up-to-date fallback 并记录 capability gap。
+- 独立 coordination 分支不整体合并 main，不得保存 token、JWT、密码、`.env` 内容或编码助手私有会话。
 
 ### 迁移规则
 
@@ -61,8 +76,15 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
 - 禁止在未登记 BACKLOG 行的情况下实施会修改仓库文件的变更（文档/流程小改可同轮登记并推进，但必须有记录）。
 - 禁止基于本地 ORM 自动同步通过就视为生产可上线。
+- 项目启用 coordination 时，禁止跳过 claim/worktree/lease/Testing/Merge Queue（或明确的 strict fallback）中任一项适用门禁，也禁止手工编辑 coordination 分支伪造状态。
 
 ## 工作流
+
+### 0. 识别项目协调协议
+
+- 读取项目 `AGENTS.md`、`package.json` 和 `.agents/skills-config.json`。
+- 若启用 `pnpm coord`，先建立 session 并查询 `pnpm coord status --json`；新需求先 claim，再登记 BACKLOG。
+- 控制面启用前已在 BACKLOG 且仍活跃的需求，只能按项目手册的一次性 import 流程导入；启用后新需求不得 import 规避 claim。
 
 ### 1. 评审需求
 
@@ -88,6 +110,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
 - 确认 `Version` 列已绑定目标版本。
 - 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
+- 启用 coordination 时，确认当前 session 已加入需求 worktree，资源/依赖已声明，且没有未处理的重叠冲突。
 
 ### 5. Dev 部署与自动化测试
 
@@ -95,6 +118,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 自动化测试开始后，将状态改为 `🧪 Testing`。
 - AI 执行单元测试、集成测试、端到端测试或 smoke，并把命令、环境、commit 和结果写入需求 `ACCEPTANCE.md` 或 Release 文档。
 - 自动化测试通过且证据完整后，将状态改为 `✅ Test Passed`。
+- 启用 coordination 时通过 `pnpm coord lifecycle advance`、`pnpm coord test run`、`pnpm coord evidence validate` 推进；任一必选测试失败必须记录证据并返回 `🔨 In Dev`，不得停留在 Testing 或手工标记 Test Passed。
 - 如用户要求人工验收，在备注中记录人工确认结果，但不要用人工确认替代自动化测试证据。
 
 ### 6. 生产规划
@@ -123,5 +147,8 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - [ ] 状态流转没有跳级，Version / Release Key 绑定时机符合项目规则。
 - [ ] 需迁移需求已有迁移草稿并关联具体脚本或 migration。
 - [ ] `✅ Test Passed` 前已有自动化测试命令、环境、commit 和结果证据。
+- [ ] 项目启用 coordination 时，requirement 已 claim/import、branch/worktree 匹配，资源与依赖已声明。
+- [ ] 共享 dev/prod 操作有匹配 lease，runtime 部署快照与当前 Version/commit/services 一致。
+- [ ] 测试失败已回 In Dev，合并 main 已通过 required checks 与 Merge Queue/strict fallback。
 - [ ] 生产部署、迁移或回滚前已有用户明确批准。
 - [ ] `BACKLOG.md` 反映真实环境进展，而不只是代码进度。
