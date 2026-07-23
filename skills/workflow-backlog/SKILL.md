@@ -18,6 +18,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 | 变更登记 | `references/change-registration.md` | 任何仓库文件变更前，先登记到 BACKLOG |
 | 迁移门禁 | `references/migration-gate.md` | 评审或开发阶段，判断是否需迁移并创建草稿 |
 | 发布规划 | `references/release-planning.md` | 自动化测试通过后，用户决定上线批次时创建 Release 文档 |
+| Checklist 驱动执行 | `docs/ops/CHECKLIST_MASTER.md` | 进入 In Dev 时生成 tailored CHECKLIST.md，按项执行 |
 
 ## 约束
 
@@ -88,14 +89,23 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
 - 确认 `Version` 列已绑定目标版本。
 - 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
+- **生成 Checklist**：
+  1. 从 BACKLOG 行读取需求属性（type、services、migration、Version）。
+  2. 从 TECH_DESIGN（如有）补充 config_schema、parallel 等判断。
+  3. 读取 `docs/ops/CHECKLIST_MASTER.md`。
+  4. 按裁剪规则选取适用项（见 CHECKLIST_MASTER.md 的“裁剪规则”一节）。
+  5. 生成 `docs/product/current/<ID>-<topic>/CHECKLIST.md`。
+  6. P0 区已完成的项直接勾选。
 
 ### 5. Dev 部署与自动化测试
 
-- 部署到 dev 完成后，将状态改为 `🚚 Dev Deployed`。
+- **按 CHECKLIST P2 逐项执行**：完成编码质量检查（lint、build、单元测试、manifest 预检），逐项勾选。
+- **按 CHECKLIST P3 逐项执行**：部署到 dev（lease → release → smoke → record），逐项勾选。部署完成后将状态改为 `🚚 Dev Deployed`。
 - 自动化测试开始后，将状态改为 `🧪 Testing`。
-- AI 执行单元测试、集成测试、端到端测试或 smoke，并把命令、环境、commit 和结果写入需求 `ACCEPTANCE.md` 或 Release 文档。
-- 自动化测试通过且证据完整后，将状态改为 `✅ Test Passed`。
+- **按 CHECKLIST P4 逐项执行**：执行测试验证（coordination 测试、release flow 合约、E2E、shadow smoke、coord test run、evidence validate），逐项勾选。并把命令、环境、commit 和结果写入需求 `ACCEPTANCE.md` 或 Release 文档。
+- P4 所有项勾选完成后，将状态改为 `✅ Test Passed`。
 - 如用户要求人工验收，在备注中记录人工确认结果，但不要用人工确认替代自动化测试证据。
+- 任何必选项失败时，按 CHECKLIST_MASTER.md 的“失败回退规则”处理。
 
 ### 6. 生产规划
 
@@ -105,8 +115,16 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 
 ### 7. 生产发布
 
+- **按 CHECKLIST P5 逐项执行**：创建 Release 目录、编写发布文档、合并 branch、打 tag、获取用户批准、prod lease、prod release、health check、deployment record、RELEASE.md、释放 lease。
 - 用户批准上线后，按 `PROD_PLAN.md` 执行发布。
-- 健康检查通过后，将相关需求更新为 `✔️ Done`。
+- P5 所有项勾选完成后，将相关需求更新为 `✔️ Done`。
+
+### 8. 关闭 Checklist
+
+- 需求完成时，确认 CHECKLIST.md 所有必选项已勾选。
+- 未勾选项必须有 `[SKIP: 原因]` 注释。
+- 最终 checklist 作为验收证据的一部分保留在需求目录。
+- 执行 CHECKLIST P6 收尾项（BACKLOG 状态、coordination lifecycle、branch 清理、遗留问题）。
 
 ## 输入
 
@@ -125,3 +143,5 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - [ ] `✅ Test Passed` 前已有自动化测试命令、环境、commit 和结果证据。
 - [ ] 生产部署、迁移或回滚前已有用户明确批准。
 - [ ] `BACKLOG.md` 反映真实环境进展，而不只是代码进度。
+- [ ] 进入 In Dev 时已生成 CHECKLIST.md，并按其逐项执行和勾选。
+- [ ] CHECKLIST P4 所有项勾选后才推进 Test Passed，P5 所有项勾选后才推进 Done。
