@@ -19,6 +19,7 @@
 
 ## 阻塞规则
 
+- `需迁移 = 待评审` 表示门禁尚未收敛，需求必须停留在 `🔍 Reviewing`，不得推进到 `📝 Req Confirmed`。
 - 需迁移的需求在迁移草稿未完成前，不得推进到 `🔨 In Dev` 之后。
 - 迁移草稿转为正式 Release 迁移文档前，需按项目规则确认 Version / Release Key。
 - 不得依赖开发环境 ORM 自动同步作为生产可上线的证据。
@@ -51,5 +52,6 @@
 
 ### 4. 维持门禁
 
+- migration assessment 未明确为 `是` 或 `否` 时，`reviewing -> req_confirmed` 必须 fail-closed。
 - 迁移草稿未完成前，阻止需求状态推进到 `🔨 In Dev` 之后。
 - 用户选定 Version / Release Key 后，迁移草稿转入正式 Release 目录。

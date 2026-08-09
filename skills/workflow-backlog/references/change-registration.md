@@ -53,14 +53,15 @@
 
 ### 2. 登记需求
 
-- 在 `BACKLOG.md` 中新增一行。
-- 分配下一个全局递增 ID。
-- 初始状态设为 `⚪ Todo`。
+- 用 `pnpm coord requirement claim` 原子分配下一个全局递增 ID。
+- 用户确认 Version 并完成绑定后，运行 `pnpm coord worktree create <ID> --topic <topic> --json`。
+- 命令成功即已在需求 worktree 新增 `⚪ Todo` 行、创建独立 BACKLOG commit、推送远端 feature branch，并完成 coordination 绑定；不得再手工重复登记。
 
 ### 3. 进入评审
 
 - 将状态改为 `🔍 Reviewing`。
 - 在备注中记录影响范围：apps、API、鉴权/RBAC、数据库、迁移、环境变量、CI、部署、文档。
+- 迁移列只有 `是` 或 `否` 才算评审完成；仍为 `待评审` 时不得进入 Req Confirmed。
 
 ### 4. 确认需求
 
@@ -78,3 +79,11 @@
 - 用户要求实施时，将状态改为 `🔨 In Dev`。
 - 确认 SemVer 需求已填写目标 Version。
 - 文档/流程类小改可在同一轮登记并推进到 `🔨 In Dev`，但必须有记录。
+- 用 `requirement declare-resources` 覆盖相对 main 的全部实际 changed paths。`BACKLOG.md` 需要声明用于投影覆盖，但不制造业务资源冲突。
+- `lifecycle advance/fail` 返回成功即表示精确 BACKLOG 行已 commit/push；exit 15 时先运行 `pnpm coord reconcile <ID> --json`。
+
+### 7. Ready 与 completion
+
+- Draft PR 保持 Gate skipped；feature、release-docs、completion 转 Ready 前运行 `pnpm coord gate preflight --head HEAD --base origin/main --json`。
+- Ready PR 与 merge group 由受信任 Gate 强校验；merge group 对组内 requirements 使用联合资源覆盖并隔离证据。
+- runtime completion 只通过受信任 workflow dispatch 提供 requirement ID；精确 merged SHA 来自 coordination。completion PR 只含 `BACKLOG.md + COMPLETION.json`，Release 文档走独立 PR。

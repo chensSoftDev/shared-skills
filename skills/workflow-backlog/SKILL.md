@@ -62,6 +62,9 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 禁止把需求状态当作代码完成度的别名；状态更新必须反映真实环境进展。
 - 禁止在未登记 BACKLOG 行的情况下实施会修改仓库文件的变更（文档/流程小改可同轮登记并推进，但必须有记录）。
 - 禁止基于本地 ORM 自动同步通过就视为生产可上线。
+- 禁止在 `worktree create` 成功后再次手工登记 BACKLOG；成功结果已经包含 Todo 行、独立 commit、远端 feature branch 与 coordination 绑定。
+- 禁止迁移仍为 `待评审` 时离开 Reviewing；禁止 lifecycle 命令返回成功后再手工补状态 commit/push。
+- 禁止 feature、release-docs 或 completion 分支未通过 `pnpm coord gate preflight` 就创建或转为 Ready PR；禁止手工拼装 runtime completion 的 commit、branch 或 merged SHA。
 
 ## 工作流
 
@@ -70,6 +73,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 将状态改为 `🔍 Reviewing`。
 - 识别是否涉及 schema、数据回填、RBAC 初始化、部署脚本或网关路由调整。
 - 在备注中标注迁移、部署和风险判断。
+- 迁移列必须收敛为 `是` 或 `否`；`待评审` 时保持 `🔍 Reviewing`。
 
 ### 2. 确认需求
 
@@ -89,6 +93,8 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 用户要求开发时，将状态改为 `🔨 In Dev`。
 - 确认 `Version` 列已绑定目标版本。
 - 若需求需迁移，确认 `docs/releases/PENDING/MIGRATION-<ID>.md` 已成稿，并指明关联脚本或 migration 文件。
+- 用 `pnpm coord worktree create` 创建需求 worktree；命令成功即已登记并推送 Todo 行。后续 `lifecycle advance/fail` 成功即已提交、推送精确 BACKLOG 投影，exit 15 必须先 reconcile。
+- 用 `requirement declare-resources` 声明全部实际 changed paths；公共 `BACKLOG.md` 需要覆盖声明，但不作为业务资源冲突。
 - **生成 Checklist**：
   1. 从 BACKLOG 行读取需求属性（type、services、migration、Version）。
   2. 从 TECH_DESIGN（如有）补充 config_schema、parallel 等判断。
@@ -106,6 +112,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - P4 所有项勾选完成后，将状态改为 `✅ Test Passed`。
 - 如用户要求人工验收，在备注中记录人工确认结果，但不要用人工确认替代自动化测试证据。
 - 任何必选项失败时，按 CHECKLIST_MASTER.md 的“失败回退规则”处理。
+- Draft PR 保持 Gate skipped；准备 Ready 时先运行 `pnpm coord gate preflight --head HEAD --base origin/main --json`。Ready PR 与 merge group 执行同一受信任 Gate 内核。
 
 ### 6. 生产规划
 
@@ -118,6 +125,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - **按 CHECKLIST P5 逐项执行**：创建 Release 目录、编写发布文档、合并 branch、打 tag、获取用户批准、prod lease、prod release、health check、deployment record、RELEASE.md、释放 lease。
 - 用户批准上线后，按 `PROD_PLAN.md` 执行发布。
 - P5 所有项勾选完成后，将相关需求更新为 `✔️ Done`。
+- tooling/governance completion 由 main push 自动生成；runtime 到达 coordination `done` 后，通过受信任 workflow dispatch 只提供 requirement ID，由 coordination 精确 merge fact 生成 `BACKLOG.md + COMPLETION.json`。Release 文档使用独立 release-docs PR，二者都必须先 preflight。
 
 ### 8. 关闭 Checklist
 
@@ -145,3 +153,4 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - [ ] `BACKLOG.md` 反映真实环境进展，而不只是代码进度。
 - [ ] 进入 In Dev 时已生成 CHECKLIST.md，并按其逐项执行和勾选。
 - [ ] CHECKLIST P4 所有项勾选后才推进 Test Passed，P5 所有项勾选后才推进 Done。
+- [ ] Ready 前 preflight 已通过，资源声明覆盖全部实际 changed paths；runtime completion 未使用手填 SHA/commit/branch。
