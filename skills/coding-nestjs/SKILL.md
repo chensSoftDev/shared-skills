@@ -29,6 +29,7 @@ description: NestJS 服务端编码通用规则：安全约定、数据库迁移
 - 影响数据库 schema、初始化 SQL、历史数据回填、RBAC 初始化的数据变更，都按需迁移处理。
 - 新增或修改 entity 后，必须同步检查 migration、初始化 SQL 或脚本、部署预检与回滚路径。
 - 面向历史库或由初始化 SQL 起步的环境，migration 要尽量幂等：创建索引/表前检查现有结构，尤其避免重复创建已由初始化 SQL 或外键隐式索引覆盖的索引。
+- 迁移中 DROP 索引前，必须先确认该索引未承担外键支撑职责：查 `information_schema.STATISTICS`（`SEQ_IN_INDEX=1` 的最左列），若被 drop 索引是某外键列唯一的最左列索引，先补建普通支撑索引再 drop，否则生产会报 `ER_DROP_INDEX_FK(1553)`（dev 若因 sync 丢失外键则永不暴露，务必按 prod 形态设计，参考 1788064642885-F157PartSupplierSoftDelete 的 `ensurePartIdSupportingIndex` 模式）。
 - 修改历史 migration 前，必须评估 `migrations` 表基线、已执行环境和回滚语义；不要只按空库路径验证。
 
 ### 精度、审计与事务
