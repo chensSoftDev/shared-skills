@@ -1,7 +1,7 @@
 ---
 name: stock-news-sector-tracker
 description: 当用户希望建立“消息→板块→个股”的联动跟踪系统，或需要盘前/盘中/盘后基于消息和盘面识别短线机会、跟踪板块异动、生成观察清单时使用。
-version: 1.1.0
+version: 2.0.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -40,7 +40,7 @@ metadata:
 
 ### 板块状态定义
 
-状态判定细则、评分公式和操作建议见 [`references/scoring-rules.md`](references/scoring-rules.md)。
+### 状态判定细则、评分公式、新闻源接入方式见 [`references/scoring-rules.md`](references/scoring-rules.md)；脚本落地细节与常见坑点见 [`references/sector-tracker-implementation-notes.md`](references/sector-tracker-implementation-notes.md)。
 
 | 状态 | 含义 | 操作含义 |
 |------|------|----------|
