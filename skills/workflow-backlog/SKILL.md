@@ -27,6 +27,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 所有需求在 `BACKLOG.md` 中跟踪。
 - 完整状态定义、迁移规则和禁止行为以项目 `BACKLOG.md` 为准。
 - 项目配置优先读取 `.agents/skills-config.json`。
+- 若项目 `AGENTS.md` / 变更管理文档启用员工可见后台的 UX 门禁，按项目定义识别适用范围、命令和既有需求豁免；不得仅凭本 skill 推定所有项目都有 `pnpm coord ux`。
 
 ### 命名规则
 
@@ -65,6 +66,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 禁止在 `worktree create` 成功后再次手工登记 BACKLOG；成功结果已经包含 Todo 行、独立 commit、远端 feature branch 与 coordination 绑定。
 - 禁止迁移仍为 `待评审` 时离开 Reviewing；禁止 lifecycle 命令返回成功后再手工补状态 commit/push。
 - 禁止 feature、release-docs 或 completion 分支未通过 `pnpm coord gate preflight` 就创建或转为 Ready PR；禁止手工拼装 runtime completion 的 commit、branch 或 merged SHA。
+- 对已启用 UX 门禁的新员工可见后台需求，禁止在当前版本的 `UX_SPEC.md`、本机可操作原型和用户明确确认齐备前进入 `🧩 Tech Design`；也不得用测试通过代替 UX 确认。
 
 ## 工作流
 
@@ -80,11 +82,15 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 用户确认需求后，将状态改为 `📝 Req Confirmed`。
 - 若项目启用 SemVer，同时在 `Version` 列绑定目标版本；若目标版本不明确，停留在 `🔍 Reviewing`。
 - 等待研发设计，不自动进入编码开发。
+- 若项目启用 UX 门禁，认领时按真实改动声明 UX 影响（luggage-platform 使用 `--ux-impact admin-ui|none`）；员工可见的页面、组件、操作步骤或文案变更，即使是小修复也按适用需求处理。旧需求是否豁免以项目的需求创建事实为准。
+- 适用需求在本阶段先完成任务式 `UX_SPEC.md` 和本机可操作原型：按员工角色与真实任务描述入口、主路径、异常恢复、结果、文案和画面；原型可让用户实际走完任务，并与规格中的场景、画面编号对应。以项目模板和原型 manifest 为准，不用截图或静态线框替代交互。
+- 提交规格与原型后，运行项目的 UX 准备检查（luggage-platform 使用 `pnpm coord ux prepare <ID> --json`），向用户展示当前可运行版本；仅在用户明确认可该需求当前版本后，引用该条直接用户消息记录确认（luggage-platform 使用 `pnpm coord ux approve`）。Agent 不得自行推定、伪造或复用泛化认可。
 
 ### 3. 研发设计
 
+- 先核对适用需求的 UX 确认仍对应当前已提交规格和原型；失效时更新产物并重新取得用户确认，不能绕过门禁推进。
 - 将状态改为 `🧩 Tech Design`。
-- 输出研发设计、实施计划和验收计划，通常放在需求目录的 `TECH_DESIGN.md`、`IMPLEMENTATION_PLAN.md`、`ACCEPTANCE.md`。
+- 以获确认的员工任务流程、界面概念和操作路径为输入，输出研发设计、实施计划和验收计划，通常放在需求目录的 `TECH_DESIGN.md`、`IMPLEMENTATION_PLAN.md`、`ACCEPTANCE.md`。
 - 评审影响文件、数据/迁移、API 契约、网关、部署和自动化测试策略。
 - 若需求需迁移，先写 `docs/releases/PENDING/MIGRATION-<ID>.md`。
 
@@ -113,6 +119,7 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - 如用户要求人工验收，在备注中记录人工确认结果，但不要用人工确认替代自动化测试证据。
 - 任何必选项失败时，按 CHECKLIST_MASTER.md 的“失败回退规则”处理。
 - Draft PR 保持 Gate skipped；准备 Ready 时先运行 `pnpm coord gate preflight --head HEAD --base origin/main --json`。Ready PR 与 merge group 执行同一受信任 Gate 内核。
+- 对启用 UX 门禁的项目，Ready 前再次核对 UX 确认绑定的规格与原型指纹；若员工可见后台改动误报为无 UX 影响，按项目命令纠正声明、补交付与确认后再 preflight。
 
 ### 6. 生产规划
 
@@ -154,3 +161,4 @@ description: 管理需求生命周期：登记变更、迁移评审、状态流�
 - [ ] 进入 In Dev 时已生成 CHECKLIST.md，并按其逐项执行和勾选。
 - [ ] CHECKLIST P4 所有项勾选后才推进 Test Passed，P5 所有项勾选后才推进 Done。
 - [ ] Ready 前 preflight 已通过，资源声明覆盖全部实际 changed paths；runtime completion 未使用手填 SHA/commit/branch。
+- [ ] 适用的员工可见后台需求在 Tech Design 前已有任务式 `UX_SPEC.md`、可操作原型和针对当前版本的直接用户确认；Ready 前仍有效，影响声明与实际改动一致。

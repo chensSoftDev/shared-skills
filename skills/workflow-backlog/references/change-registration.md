@@ -54,6 +54,7 @@
 ### 2. 登记需求
 
 - 用 `pnpm coord requirement claim` 原子分配下一个全局递增 ID。
+- 若项目启用 UX 门禁，按实际员工可见后台影响填写项目要求的 UX 影响声明（如 `--ux-impact admin-ui|none`）；不要把页面、组件、操作或文案变化声明为无影响。
 - 用户确认 Version 并完成绑定后，运行 `pnpm coord worktree create <ID> --topic <topic> --json`。
 - 命令成功即已在需求 worktree 新增 `⚪ Todo` 行、创建独立 BACKLOG commit、推送远端 feature branch，并完成 coordination 绑定；不得再手工重复登记。
 
@@ -68,9 +69,11 @@
 - 用户确认后，将状态改为 `📝 Req Confirmed`。
 - SemVer 项目同时填写目标 Version。
 - 等待研发设计，不自动进入编码开发。
+- 适用 UX 门禁的需求先完成项目模板要求的 `UX_SPEC.md` 和可操作原型，提交后经用户明确确认当前版本；确认事实按项目机制记录，不在规格里自行写“已批准”。
 
 ### 5. 研发设计
 
+- 核对适用需求当前 UX 版本的确认有效，再推进 Tech Design；技术方案以已确认的员工任务流程为输入。
 - 将状态改为 `🧩 Tech Design`。
 - 输出研发设计、实施计划和验收计划。
 
@@ -85,5 +88,6 @@
 ### 7. Ready 与 completion
 
 - Draft PR 保持 Gate skipped；feature、release-docs、completion 转 Ready 前运行 `pnpm coord gate preflight --head HEAD --base origin/main --json`。
+- 已启用 UX 门禁的项目须在 Ready 前复查确认指纹和 UX 影响声明；发生变化时重新评审与确认。
 - Ready PR 与 merge group 由受信任 Gate 强校验；merge group 对组内 requirements 使用联合资源覆盖并隔离证据。
 - runtime completion 只通过受信任 workflow dispatch 提供 requirement ID；精确 merged SHA 来自 coordination。completion PR 只含 `BACKLOG.md + COMPLETION.json`，Release 文档走独立 PR。
