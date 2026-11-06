@@ -22,9 +22,18 @@ shared-skills/
     │   └── tracking/
     ├── coding-miniapp/     # 小程序端编码规则
     │   └── SKILL.md
-    ├── coding-nestjs/      # NestJS 服务端通用编码规则
+    ├── coding-nestjs/      # NestJS 框架实现与迁移集成
     │   └── SKILL.md
-    ├── coding-nextjs/      # Next.js 前端编码规则
+    ├── coding-nextjs/      # Next.js / React 框架与对象适配
+    │   └── SKILL.md
+    ├── design-frontend-architecture/ # 纯TS业务对象、状态与架构
+    │   ├── SKILL.md
+    │   ├── references/
+    │   └── examples/
+    ├── design-backend-architecture/  # 后端架构与数据库设计
+    │   ├── SKILL.md
+    │   └── references/
+    ├── frontend-ui-quality/          # 界面与交互实现检查
     │   └── SKILL.md
     ├── create-skill/       # Skill 创建与维护流程
     │   ├── SKILL.md
@@ -69,8 +78,11 @@ shared-skills/
 |-------|----------|------|---------------|
 | `stock-daily-review` | 复盘 A 股涨停、分析题材归类、硬逻辑/擦边逻辑和短线情景推演 | 约束 A 股每日复盘的数据核验、涨停池口径、逻辑分层、风险声明和追踪沉淀 | 否 |
 | `coding-miniapp` | 编写或修改 `miniapp/` 小程序代码 | 约束小程序 UI、API 基址、交互、数量格式和写操作配套要求 | 否 |
-| `coding-nestjs` | 编写或修改 NestJS 服务端代码 | 约束安全、鉴权、迁移、精度、审计日志、事务和验证要求 | 否 |
-| `coding-nextjs` | 编写或修改 `apps/web`、`apps/admin` 前端代码 | 约束设计系统、token、双语、环境变量和确认交互 | 否 |
+| `design-frontend-architecture` | 前端业务规则、任务状态、对象与抽象设计 | 以纯TS业务对象集中封装规则，明确组合、生命周期、状态与错误 | 否 |
+| `coding-nextjs` | Next.js／React路由、组件、Hook、表单与Server/Client集成 | 框架实现、业务对象响应式适配与项目约定，按影响加载独立规范 | 否 |
+| `frontend-ui-quality` | 可见文案／样式、信息层级、任务交互实现或检查 | 基于项目设计和已确认UX检查界面质量及真实浏览器体验 | 否 |
+| `design-backend-architecture` | 服务端业务／接口／状态／错误或数据库设计 | 业务对象与用例边界、数据授权、一致性及读写安全与性能 | 否 |
+| `coding-nestjs` | NestJS Module／DI／Controller／DTO／Entity／迁移集成 | 框架接线、鉴权／异常、精度／审计／事务及项目验证 | 否 |
 | `create-skill` | 新建、更新、改造或校验 skill | 维护 skill 结构、模板、资源引用、注册同步和格式校验 | 是 |
 | `testing-miniapp-e2e` | 创建、拆分或重构小程序 E2E 测试 | 指导 miniprogram-automator 用例拆分、步骤化实现和 helper 提取 | 否 |
 | `video-asset` | 为视频场景准备素材 | 从用户素材、AI 生成或图库获取场景素材 | 是 |
