@@ -69,8 +69,8 @@ shared-skills/
 |-------|----------|------|---------------|
 | `stock-daily-review` | 复盘 A 股涨停、分析题材归类、硬逻辑/擦边逻辑和短线情景推演 | 约束 A 股每日复盘的数据核验、涨停池口径、逻辑分层、风险声明和追踪沉淀 | 否 |
 | `coding-miniapp` | 编写或修改 `miniapp/` 小程序代码 | 约束小程序 UI、API 基址、交互、数量格式和写操作配套要求 | 否 |
-| `coding-nestjs` | 编写或修改 NestJS 服务端代码 | 约束安全、鉴权、迁移、精度、审计日志、事务和验证要求 | 否 |
-| `coding-nextjs` | 编写或修改 `apps/web`、`apps/admin` 前端代码 | 约束设计系统、token、双语、环境变量和确认交互 | 否 |
+| `coding-nestjs` | 编写或修改 NestJS 服务端代码 | 约束分层、抽象、状态、错误、数据库安全与性能，以及鉴权、迁移、精度、审计和事务 | 否 |
+| `coding-nextjs` | 编写或修改 `apps/web`、`apps/admin` 前端代码 | 约束分层、组件封装、类型、状态、错误与界面交互质量，按项目配置读取设计系统和环境约定 | 否 |
 | `create-skill` | 新建、更新、改造或校验 skill | 维护 skill 结构、模板、资源引用、注册同步和格式校验 | 是 |
 | `testing-miniapp-e2e` | 创建、拆分或重构小程序 E2E 测试 | 指导 miniprogram-automator 用例拆分、步骤化实现和 helper 提取 | 否 |
 | `video-asset` | 为视频场景准备素材 | 从用户素材、AI 生成或图库获取场景素材 | 是 |
